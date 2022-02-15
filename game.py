@@ -2,6 +2,12 @@ import numpy as np
 import pandas as pd
 import math
 
+def sum_2d_array(arr):
+    sum = 0
+    for i in range(len(arr)):
+        for j in range(len(arr[i])):
+            sum += arr[i][j]
+    return sum
 
 class Game:
     def __init__(self, tab, actions, actions2=[], asymetrical=False):
@@ -34,8 +40,7 @@ class Game:
         bool_x_y = bool_x & bool_y
         result = np.where(bool_x_y == True)
         listOfCoordinates = list(zip(result[0], result[1]))
-        listOfActions = [(self.actions[i], self.actions[j]) for (i,j) in listOfCoordinates]
-        return listOfActions
+        return listOfCoordinates
 
     def isPareto(self, t, s):
         return (
@@ -56,8 +61,8 @@ class Game:
             if self.isPareto(s, liste):
                 res.append((x, y))
             x = x + 1
-        listOfActions = [(self.actions[i], self.actions[j]) for (i,j) in res]
-        return listOfActions
+        # listOfActions = [(self.actions[i], self.actions[j]) for (i,j) in res]
+        return res
 
     def getDominantStrategies(self, strict=True):
         dominatedLines = []
