@@ -71,6 +71,8 @@ def ethical_iteration(scores, actions, num_player):
         epsilon = 1e-10
         u1_0 = gamma * u0_0 + (1-gamma) * alpha[0][1] * u0_1
         u1_1 = gamma * u0_1 + (1-gamma) * alpha[1][0] * u0_0
+        
+
         if u1_0 < epsilon:
             u1_0 = 0
         if u1_1 < epsilon:

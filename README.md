@@ -3,7 +3,9 @@
 To do:
 - [x] set up IPD exp
 - [x] prelim implement algo
-- [ ] write game class in a way that is convenient for the algorithm
+- [x] write game class in a way that is convenient for the algorithm
 - [ ] look into Nash solver
-- [ ] implement algorithm correctly, check result
 - [ ] add trembling-hand
+- [x] add epsilon_Nash
+- [x] update all entries at once
+- [ ] constrain alpha so that the sum of scores non-decreasing
