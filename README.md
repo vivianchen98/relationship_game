@@ -16,7 +16,7 @@ python3 main_master.py --iter 100 --gamma 0.1 --epsilon 0.1 --nash_type epsilon_
 
 * Complete info (player can update all entries in game matrix) does not need much exploration, can just use nash
 ```
-python3 main_master.py --iter 100 --gamma 0.1 -nash_type nash --player_info complete
+python3 main_master.py --iter 100 --gamma 0.1 --nash_type nash --player_info complete
 ```
 
 
