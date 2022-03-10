@@ -9,9 +9,16 @@ dependencies: argparse
 
 ### Running experiment
 
+* Partial info (player only updates the selected entry in game matrix) needs epsilon-nash to boost exploration
 ```
-python3 main_master.py --iter 100 --gamma 0.1 --epsilon 0.05 --nash_type epsilon_nash --player_info partial
+python3 main_master.py --iter 100 --gamma 0.1 --epsilon 0.1 --nash_type epsilon_nash --player_info partial
 ```
+
+* Complete info (player can update all entries in game matrix) does not need much exploration, can just use nash
+```
+python3 main_master.py --iter 100 --gamma 0.1 --nash_type nash --player_info complete
+```
+
 
 command line arguments:
 * --iter(int): the number of simulation iterations
