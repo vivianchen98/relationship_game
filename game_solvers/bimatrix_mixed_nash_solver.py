@@ -1,4 +1,4 @@
-import pyomo.environ as pyo
+# import pyomo.environ as pyo
 import numpy as np
 
 """
@@ -6,10 +6,10 @@ Implements Lemke-Howson pivoting method for bimatrix games.
 """
 
 class LemkeHowsonGameSolver:
-    def __init__(self, A, B):
+    def __init__(self, A, B, max_pivots=1000):
         self.A = np.array(A)
         self.B = np.array(B)
-        self.max_pivots = 1000
+        self.max_pivots = max_pivots
 
     def solve_mixed_nash(self, epsilon=0.0):
         """
@@ -22,6 +22,7 @@ class LemkeHowsonGameSolver:
             - pivots: number of pivots performed to find solution
             - ray_term: true if method exited prematurely with a ray termination
         """
+        assert self.A.shape == self.B.shape, "Game matrices of different size."
 
         # normalize bimatrix
         A_pos = np.add(self.A, 1.0 - np.amin(A))
@@ -37,6 +38,7 @@ class LemkeHowsonGameSolver:
                 [-np.ones((m,1)) * x_factor],
                 [-np.ones((n,1)) * y_factor]
                 ])
+
         lhs = np.identity(m+n)
         middle = np.block([
                 [np.zeros((m,m)), -A_pos],
@@ -44,7 +46,7 @@ class LemkeHowsonGameSolver:
                 ])
         T = np.block([lhs, middle, rhs])
 
-        basis = np.array([range(1,m+n+1)]).T
+        basis = np.asarray(range(1, m+n+1))
 
         r = np.argmin(B_pos.T[:, 0])
         self.pivot(T, m+r, m+n)
@@ -62,8 +64,7 @@ class LemkeHowsonGameSolver:
         while (1 in basis) and (m+n+1 in basis):
                 d = T[:, entering-1]
                 wrong_dir = d <= 0
-                wrong_dir = wrong_dir.astype(int)
-                ratios = np.float64(T[:,-1]) / d
+                ratios = np.divide(np.float64(T[:,-1]), d, out=np.zeros_like(np.float64(T[:,-1])), where=d != 0)
                 ratios[wrong_dir] = np.inf
                 t = np.argmin(ratios)
                 if not all(wrong_dir):
@@ -112,6 +113,15 @@ B = [[1,2], [3,1]]
 # expected result
 # x = (2/3, 1/3)
 # y = (1/2, 1/2)
+
+# test example2
+# A = [[ 0, 1, -1],
+#      [-1, 0,  1],
+#      [1, -1, 0]]
+#
+# B = [[0, -1,  1],
+#      [1,  0, -1],
+#      [-1,  1, 0]]
 
 solver = LemkeHowsonGameSolver(A, B)
 x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
