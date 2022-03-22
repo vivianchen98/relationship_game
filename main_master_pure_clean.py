@@ -124,8 +124,8 @@ def ethical_iteration(num_player, scores, actions, num_iter=args.iter, delta=arg
         if g_diff_x_norm < delta and g_diff_y_norm < delta:
             converged = True
             converge_iter = i
-            greedy_pi = (np.argmax(g.scores["x"]) // 2, np.argmax(g.scores["y"]) % 2) # greedy_pi = (argmax_a (A), argmax_b (B))
-            nash_pi = g.getNash()
+            greedy_pi = (np.argmax(g_.scores["x"]) // 2, np.argmax(g_.scores["y"]) % 2) # greedy: maximize utility (regardless of sign)
+            nash_pi = g_.getNash()
             break
         else:
             print("x norm: ", g_diff_x_norm)
@@ -136,12 +136,17 @@ def ethical_iteration(num_player, scores, actions, num_iter=args.iter, delta=arg
 
     # output convergence result
     print("\n************ Result **************")
-    print("Nash for original game: ", original_nash_pi)
+    print("Nash sols for original game: ", original_nash_pi)
+    for pi in original_nash_pi:
+        print("Nash action profile: ", (actions[pi[0]], actions[pi[1]]))
     print()
     if converged:
         print("converge at iter", converge_iter)
-        print("greedy_pi", greedy_pi)
-        print("nash_pi", nash_pi)
+        print("* greedy_pi", greedy_pi)
+        print("* Greedy action profile: ", (actions[greedy_pi[0]], actions[greedy_pi[1]]))
+        print("- nash_pi", nash_pi)
+        for pi in nash_pi:
+            print("- Nash action profile: ", (actions[pi[0]], actions[pi[1]]))
         print()
     else:
         print("does not converge (L2-norm of game < {}) for {} iterations".format(delta, num_iter))
@@ -156,9 +161,14 @@ def ethical_iteration(num_player, scores, actions, num_iter=args.iter, delta=arg
 # Prisoner's dilemma
 ipd_scores =[(3,3),(0,5),(5,0),(1,1)]
 ipd_actions = ['C','D']
-player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, ipd_scores, ipd_actions, args.iter, args.delta)
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, ipd_scores, ipd_actions, args.iter, args.delta)
 
 # Rock-scissors-paper
 rsp_scores = [(0,0), (1,-1), (-1,1), (-1,1), (0,0), (1,-1), (1,-1), (-1,1), (0,0)]
 rsp_actions =['R', 'S', 'P']
 # player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, rsp_scores, rsp_actions, args.iter, args.delta)
+
+# traffic example
+traffic_scores = [(-2,-2), (-4,-1.5), (-1.5,-4), (-3,-3)]
+traffic_actions = ['Route A', 'Route B']
+player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, traffic_scores, traffic_actions, args.iter, args.delta)

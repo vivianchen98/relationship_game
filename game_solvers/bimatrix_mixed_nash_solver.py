@@ -134,6 +134,13 @@ B = [[1,0], [3,2]]
 # x = (0, 1)
 # y = (0, 1)
 
+# test example 4: traffic
+A = [[2,4], [1.5, 3]]
+B = [[2,1.5], [4, 3]]
+# expected result
+# x = (0, 1)
+# y = (0, 1)
+
 solver = LemkeHowsonGameSolver(A, B)
 x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
 print("x: ", x_normalized)
