@@ -44,7 +44,7 @@ def ethical_iteration(num_player, scores, actions, gamma=0.5, epsilon=0.1):
     original_scores = scores.copy()
 
     alpha = [[0, 1], [1, 0]]
-    gamma = [0.5, 0.5]
+    gamma = [0.1, 0.1]
 
     sum_list = []
     player_0_scores_list = []
@@ -161,7 +161,6 @@ rsp_actions =['R', 'S', 'P']
 # plt.legend()
 # plt.show()
 
-import pdb; pdb.set_trace()
 # player0's score figure
 player_0_scores_list = np.array(player_0_scores_list)
 plt.subplot(1,2,1)

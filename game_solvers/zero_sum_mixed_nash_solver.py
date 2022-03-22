@@ -1,5 +1,7 @@
 import pyomo.environ as pyo
 import numpy as np
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 """
 A zero-sum solver that casts the game as linear program.
@@ -8,6 +10,7 @@ A zero-sum solver that casts the game as linear program.
 class ZeroSumSolver:
     def __init__(self, game_matrix):
         self.game_matrix = np.array(game_matrix)
+        self.m, self.n = self.game_matrix.shape
 
     def solve_mixed_nash(self):
         y, V_y = self.solve_mixed_security_strategy(self.game_matrix)
@@ -62,6 +65,12 @@ class ZeroSumSolver:
         print("mixed nash for P1 (y): ", y)
         print("mixed nash for P2 (z): ", z)
 
-game_matrix = [[3, 0], [-1, 1]]
-solver = ZeroSumSolver(game_matrix)
-solver.solve_print()
+    def prettyPrint(self):
+        print('------------- Matrix Game: A --------------')
+        print(self.game_matrix)
+        print()
+
+
+# game_matrix = [[3, 0], [-1, 1]]
+# solver = ZeroSumSolver(game_matrix)
+# solver.solve_print()
