@@ -1,4 +1,3 @@
-# import pyomo.environ as pyo
 import numpy as np
 
 """
@@ -106,15 +105,20 @@ class LemkeHowsonGameSolver:
         T -= np.matmul(T[:, col].reshape(-1,1), pivot.reshape(1,pivot.size))
         T[row, :] = pivot.T
 
+    def prettyPrint(self):
+        print('------------- Matrix Game: A & B --------------')
+        print(self.A)
+        print(self.B)
+        print()
 
-# test example
-A = [[3,2], [2,3]]
-B = [[1,2], [3,1]]
+# test example 1
+# A = [[3,2], [2,3]]
+# B = [[1,2], [3,1]]
 # expected result
 # x = (2/3, 1/3)
 # y = (1/2, 1/2)
 
-# test example2
+# test example 2
 # A = [[ 0, 1, -1],
 #      [-1, 0,  1],
 #      [1, -1, 0]]
@@ -122,6 +126,13 @@ B = [[1,2], [3,1]]
 # B = [[0, -1,  1],
 #      [1,  0, -1],
 #      [-1,  1, 0]]
+
+# test example 3: prisoner's dilemma
+A = [[1,3], [0,2]]
+B = [[1,0], [3,2]]
+# expected result
+# x = (0, 1)
+# y = (0, 1)
 
 solver = LemkeHowsonGameSolver(A, B)
 x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
