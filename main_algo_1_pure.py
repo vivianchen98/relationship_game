@@ -154,19 +154,24 @@ def ethical_iteration(num_player, scores, actions, num_iter=args.iter, epsilon=a
     # if args.plot:
     #     plot_result(player_0_scores_list, player_1_scores_list)
 
-    return player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi)  #info = (converge_iter, greedy_pi, nash_pi)
+    return player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices)  #info = (converge_iter, pi_0_indices, pi_1_indices)
 
 # Prisoner's dilemma
 ipd_scores =[(3,3),(0,5),(5,0),(1,1)]
 ipd_actions = ['C','D']
-# player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, ipd_scores, ipd_actions)
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, ipd_scores, ipd_actions)
 
 # Rock-scissors-paper
 rsp_scores = [(0,0), (1,-1), (-1,1), (-1,1), (0,0), (1,-1), (1,-1), (-1,1), (0,0)]
 rsp_actions =['R', 'S', 'P']
-# player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, rsp_scores, rsp_actions)
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, rsp_scores, rsp_actions)
 
 # traffic example
 traffic_scores = [(-2,-2), (-4,-1.5), (-1.5,-4), (-3,-3)]
 traffic_actions = ['Route A', 'Route B']
-player_0_scores_list, player_1_scores_list, converged, (converge_iter, greedy_pi, nash_pi) = ethical_iteration(2, traffic_scores, traffic_actions)
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_scores, traffic_actions)
+
+# traffic example (scaled up: 3 actions)
+traffic_3_scores = [(-2,-2), (-4,-1.5), (-4,-2.5), (-1.5,-4), (-3,-3), (-1.5,-2.5), (-2.5,-4), (-2.5,-1.5), (-2.5,-2.5)]
+traffic_3_actions = ['Route A', 'Route B', 'Route C']
+player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_3_scores, traffic_3_actions)
