@@ -98,17 +98,35 @@ class LemkeHowsonGameSolver:
         x_normalized = (np.float64(x) / (x_sum * x_factor)) + epsilon
         y_normalized = (np.float64(y) / (y_sum * y_factor)) + epsilon
 
-        return x_normalized, y_normalized, (pivots, ray_term, max_iters)
+        return (x_normalized, y_normalized), (pivots, ray_term, max_iters)
 
     def pivot(self, T, row, col):
         pivot = T[row, :] / T[row, col]
         T -= np.matmul(T[:, col].reshape(-1,1), pivot.reshape(1,pivot.size))
         T[row, :] = pivot.T
 
-    def prettyPrint(self):
-        print('------------- Matrix Game: A & B --------------')
+    def support(self, pi):
+        # return the support of a mixed strategy
+        # (the set of pure strategies assigned positive probability)
+
+        support = []
+        for pi_i in pi:
+            support_i = [idx for idx, val in enumerate(pi_i) if val > 0]
+            support.append(support_i)
+        return support
+
+    def prettyPrintGame(self):
+        # print('------------- Matrix Game: A & B --------------')
+        print('A')
         print(self.A)
+        print('B')
         print(self.B)
+        print()
+
+    def prettyPrintSol(self, pi):
+        # print("mixed nash sol " + str(pi))
+        for i in range(len(pi)):
+            print('  Player ' + str(i+1) + ': ' + str(pi[i]))
         print()
 
 # test example 1
@@ -141,7 +159,10 @@ B = [[2,1.5], [4, 3]]
 # x = (0, 1)
 # y = (0, 1)
 
-solver = LemkeHowsonGameSolver(A, B)
-x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
-print("x: ", x_normalized)
-print("y: ", y_normalized)
+# solver = LemkeHowsonGameSolver(A, B)
+# x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
+# print("x: ", x_normalized)
+# print("y: ", y_normalized)
+# pi = [x_normalized, y_normalized]
+# support = solver.support(pi)
+# print(support)
