@@ -4,6 +4,7 @@ from game_solvers.bimatrix_mixed_nash_solver import LemkeHowsonGameSolver
 from matplotlib import pyplot as plt
 import random
 import argparse
+import itertools
 
 # command line arguments
 parser = argparse.ArgumentParser()
@@ -18,27 +19,31 @@ parser.add_argument('--plot', default=True, action=argparse.BooleanOptionalActio
 args = parser.parse_args()
 
 # helper function: to plot results
-def plot_result(player_0_scores_list, player_1_scores_list):
+def plot_result(player_0_scores_list, player_1_scores_list, actions):
+    # generate action_profiles (cartesian product of actions)
+    action_profiles = list(itertools.product(actions, actions))
+    action_profiles_list = [' '.join(t) for t in action_profiles]
+
     # player0's score figure
     player_0_scores_list = np.array(player_0_scores_list)
     plt.subplot(1,2,1)
-    for i, label in enumerate(['CC', 'CD', 'DC', 'DD']):
-        plt.plot(player_0_scores_list[:, i], label=label)
+    for i, label in enumerate(action_profiles_list):
+        plt.plot(player_0_scores_list[:, i], label=label, alpha=0.8)
     plt.xlim([0, args.iter])
     plt.xlabel('iter')
     plt.ylabel('game matrix score')
-    plt.title('Player 0')
+    plt.title('Player 1')
     plt.legend()
 
     # player1's score figure
     player_1_scores_list = np.array(player_1_scores_list)
     plt.subplot(1,2,2)
-    for i, label in enumerate(['CC', 'CD', 'DC', 'DD']):
-        plt.plot(player_1_scores_list[:, i], label=label)
+    for i, label in enumerate(action_profiles_list):
+        plt.plot(player_1_scores_list[:, i], label=label, alpha=0.8)
     plt.xlim([0, args.iter])
     plt.xlabel('iter')
     plt.ylabel('game matrix score')
-    plt.title('Player 1')
+    plt.title('Player 2')
     plt.legend()
 
     plt.suptitle('Strategy score updates')
@@ -66,7 +71,7 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
     """
     # needed parameters
     alpha = [[0, 1], [1, 0]]
-    gamma = [0.5, 0.5]
+    gamma = [0.1, 0.1]
 
     # output placeholders
     player_0_scores_list = []
@@ -125,7 +130,7 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
 
         # create and solve the updated game: pi^1 = mixed-Nash(g)
         g.prettyPrintGame()
-        (pi_1), (pivots, ray_term, max_iters) = g.solve_mixed_nash()
+        pi_1, (pivots, ray_term, max_iters) = g.solve_mixed_nash()
         print("pi_1: ")
         g.prettyPrintSol(pi_1)
 
@@ -141,30 +146,30 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
             print("pi_0 (greedy): ", pi_0_choice)
 
         # termination/convergence test
-        if g.A.all() == g_previous.A.all() and g.B.all() == g_previous.B.all() and all_visited:
-            converged = True
-            converge_iter = i
-            print("CONVERGED!!!!")
-            break
+        # if g.A.all() == g_previous.A.all() and g.B.all() == g_previous.B.all() and all_visited:
+        #     converged = True
+        #     converge_iter = i
+        #     print("CONVERGED!!!!")
+        #     break
 
     # output convergence result
     print("\n************ Result **************")
     print("Nash sols for original game: ", original_nash_pi_choice)
     print("Nash action profile: ", (actions[original_nash_pi_choice[0]], actions[original_nash_pi_choice[1]]))
     print()
-    if converged:
-        print("converge at iter", converge_iter)
-        print("* pi_0", pi_0_choice)
-        print("* pi_0 profile: ", (actions[pi_0_choice[0]], actions[pi_0_choice[1]]))
-        print("- pi_1 P1 (y) for " + str(actions) + ': ', pi_1[0])
-        print("- pi_1 P2 (z) for " + str(actions) + ': ', pi_1[1])
-        print()
-        # plot result if converged and plot requested
-        if args.plot:
-            plot_result(player_0_scores_list, player_1_scores_list)
-    else:
-        print("does not converge for {} iterations".format(num_iter))
-        print()
+    # if converged:
+    # print("converge at iter", converge_iter)
+    print("* pi_0", pi_0_choice)
+    print("* pi_0 profile: ", (actions[pi_0_choice[0]], actions[pi_0_choice[1]]))
+    print("- pi_1 P1 (y) for " + str(actions) + ': ', pi_1[0])
+    print("- pi_1 P2 (z) for " + str(actions) + ': ', pi_1[1])
+    print()
+    # plot result if converged and plot requested
+    if args.plot:
+        plot_result(player_0_scores_list, player_1_scores_list, actions)
+    # else:
+    #     print("does not converge for {} iterations".format(num_iter))
+    #     print()
 
     return player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_choice, pi_1)  #info = (converge_iter, pi_0_indices, pi_1_indices)
 
