@@ -1,5 +1,5 @@
 from game_solvers.pure_game import *
-from game_solvers.zero_sum_mixed_nash_solver import ZeroSumSolver
+# from game_solvers.zero_sum_mixed_nash_solver import ZeroSumSolver
 from game_solvers.bimatrix_mixed_nash_solver import LemkeHowsonGameSolver
 from matplotlib import pyplot as plt
 import random
@@ -26,7 +26,7 @@ def plot_result(player_0_scores_list, player_1_scores_list, actions):
 
     # player0's score figure
     player_0_scores_list = np.array(player_0_scores_list)
-    plt.subplot(1,2,1)
+    plt.subplot(1,3,1)
     for i, label in enumerate(action_profiles_list):
         plt.plot(player_0_scores_list[:, i], label=label, alpha=0.8)
     plt.xlim([0, args.iter])
@@ -37,13 +37,24 @@ def plot_result(player_0_scores_list, player_1_scores_list, actions):
 
     # player1's score figure
     player_1_scores_list = np.array(player_1_scores_list)
-    plt.subplot(1,2,2)
+    plt.subplot(1,3,2)
     for i, label in enumerate(action_profiles_list):
         plt.plot(player_1_scores_list[:, i], label=label, alpha=0.8)
     plt.xlim([0, args.iter])
     plt.xlabel('iter')
     plt.ylabel('game matrix score')
     plt.title('Player 2')
+    plt.legend()
+
+    # social score figure
+    total_scores_list = player_0_scores_list + player_1_scores_list
+    plt.subplot(1,3,3)
+    for i, label in enumerate(action_profiles_list):
+        plt.plot(total_scores_list[:, i], label=label, alpha=0.8)
+    plt.xlim([0, args.iter])
+    plt.xlabel('iter')
+    plt.ylabel('game matrix score')
+    plt.title('Sum of all players')
     plt.legend()
 
     plt.suptitle('Strategy score updates')
@@ -70,8 +81,9 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
             - pi_1 (mixed solution)
     """
     # needed parameters
-    alpha = [[0, 1], [1, 0]]
-    gamma = [0.1, 0.1]
+    alpha = [[0, 1], [0.8, 0]]
+    alpha = alpha / sum(sum(np.array(alpha))) * len(alpha)
+    gamma = [0.5, 0.5]
 
     # output placeholders
     player_0_scores_list = []
@@ -85,24 +97,25 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
     pi_0, (pivots, ray_term, max_iters) = g.solve_mixed_nash()
     print("pi_0: ")
     g.prettyPrintSol(pi_0)
-    #
-    # print("pi_0 P1 (y): ", y)
-    # print("pi_0 P2 (z): ", z)
+
 
     pi_0_support = g.support(pi_0)
     print("support: ", pi_0_support)
     pi_0_choice = [random.choice(pi_0_support_i) for pi_0_support_i in pi_0_support]
 
     # store original utility function
-    original_g = g
+    original_A = A
+    original_B = B
+    original_g = LemkeHowsonGameSolver(original_A, original_B)
     original_nash_pi_choice = pi_0_choice
+    original_sum = sum(sum(g.A + g.B))
 
     # variables to lable whether all entries in game matrix visited
     pi_0_choice_visited = []
     all_visited = False
 
     for i in range(num_iter):
-        print("-----------iter{}-----------".format(i))
+        # print("-----------iter{}-----------".format(i))
 
         # label whether pi_0_choice visited before
         if len(pi_0_choice_visited) < len(actions) ** 2:
@@ -127,23 +140,24 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
         g.B[tuple(pi_0_choice)] = u1_1
         player_0_scores_list.append(g.A.flatten().tolist())
         player_1_scores_list.append(g.B.flatten().tolist())
+        current_sum = sum(sum(g.A + g.B))
 
         # create and solve the updated game: pi^1 = mixed-Nash(g)
-        g.prettyPrintGame()
+        # g.prettyPrintGame()
         pi_1, (pivots, ray_term, max_iters) = g.solve_mixed_nash()
-        print("pi_1: ")
-        g.prettyPrintSol(pi_1)
+        # print("pi_1: ")
+        # g.prettyPrintSol(pi_1)
 
         # epsilon-greedy action profile: pi_0 = {(epsilon): random action profile; (1-epsilon): argmax_{a_i \in A_i} {u_i(a_i|pi^1_{-i})}}
         pi_0_choice = []
         eps = np.random.random()
         if eps < epsilon:
             pi_0_choice = [np.random.randint(0,len(actions)), np.random.randint(0,len(actions))]
-            print("pi_0 (random): ", pi_0_choice)
+            # print("pi_0 (random): ", pi_0_choice)
         else:
             # compute expected utility and choose the minimizer (cost matrix)
             pi_0_choice = [np.argmin(np.dot(g.A, pi_1[1])), np.argmin(np.dot(pi_1[0], g.B))]
-            print("pi_0 (greedy): ", pi_0_choice)
+            # print("pi_0 (greedy): ", pi_0_choice)
 
         # termination/convergence test
         # if g.A.all() == g_previous.A.all() and g.B.all() == g_previous.B.all() and all_visited:
@@ -154,8 +168,10 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
 
     # output convergence result
     print("\n************ Result **************")
+    print("pi_0 :", pi_0)
     print("Nash sols for original game: ", original_nash_pi_choice)
     print("Nash action profile: ", (actions[original_nash_pi_choice[0]], actions[original_nash_pi_choice[1]]))
+    print("original sum: ", original_sum)
     print()
     # if converged:
     # print("converge at iter", converge_iter)
@@ -163,6 +179,7 @@ def ethical_iteration(num_player, A, B, actions, num_iter=args.iter, epsilon=arg
     print("* pi_0 profile: ", (actions[pi_0_choice[0]], actions[pi_0_choice[1]]))
     print("- pi_1 P1 (y) for " + str(actions) + ': ', pi_1[0])
     print("- pi_1 P2 (z) for " + str(actions) + ': ', pi_1[1])
+    print("current sum: ", current_sum)
     print()
     # plot result if converged and plot requested
     if args.plot:
@@ -188,13 +205,26 @@ rsp_actions =['R', 'S', 'P']
 traffic_A = [[2,4], [1.5, 3]]
 traffic_B = [[2,1.5], [4, 3]]
 traffic_actions = ['Route A', 'Route B']
-# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_A, traffic_B, traffic_actions)
+player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_A, traffic_B, traffic_actions)
 
 # traffic example (scaled up: 3 actions)
 # traffic_3_scores = [(-2,-2), (-4,-1.5), (-4,-2.5),
 #                     (-1.5,-4), (-3,-3), (-1.5,-2.5),
 #                     (-2.5,-4), (-2.5,-1.5), (-2.5,-2.5)]
-traffic_3_A = [[2, 4, 4], [1.5, 3, 1.5], [2.5, 2.5, 2.5]]
-traffic_3_B = [[2, 1.5, 2.5], [4, 3, 2.5], [4, 1.5, 2.5]]
+traffic_3_A = [[2, 4, 4], [1.5, 3, 1.5], [2.5, 2.5, 5]]
+traffic_3_B = [[2, 1.5, 2.5], [4, 3, 2.5], [4, 1.5, 5]]
 traffic_3_actions = ['Route A', 'Route B', 'Route C']
-player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_3_A, traffic_3_B, traffic_3_actions)
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_3_A, traffic_3_B, traffic_3_actions)
+
+
+# traffic example (with nondeterminism)
+traffic_nondeterminsm_A = [[2, 3.5, 4], [1.5, 2.5, 1.5], [2.5, 2.5, 5]]
+traffic_nondeterminsm_B = [[2, 1.5, 2.5], [3.5, 2.5, 2.5], [4, 1.5, 5]]
+traffic_nondeterminsm_actions = ['A-C', 'A-D', 'B']
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, traffic_nondeterminsm_A, traffic_nondeterminsm_B, traffic_nondeterminsm_actions)
+
+# chaining traffic 2 sections
+chain_2_A = [[4, 6, 6, 8], [3.5, 5, 5.5, 7], [3.5, 5.5, 5, 7], [3, 4.5, 4.5, 6]]
+chain_2_B = [[4, 3.5, 3.5, 3], [6, 5, 5.5, 4.5], [6, 5.5, 5, 4.5], [8, 7, 7, 6]]
+chain_actions = ['A-A', 'A-B', 'B-A', 'B-B']
+# player_0_scores_list, player_1_scores_list, converged, (converge_iter, pi_0_indices, pi_1_indices) = ethical_iteration(2, chain_2_A, chain_2_B, chain_actions)

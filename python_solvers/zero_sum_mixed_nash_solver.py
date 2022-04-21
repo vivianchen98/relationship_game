@@ -71,6 +71,6 @@ class ZeroSumSolver:
         print()
 
 
-# game_matrix = [[3, 0], [-1, 1]]
-# solver = ZeroSumSolver(game_matrix)
-# solver.solve_print()
+game_matrix = [[3, 0], [-1, 1]]
+solver = ZeroSumSolver(game_matrix)
+solver.solve_print()

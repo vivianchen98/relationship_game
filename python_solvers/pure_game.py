@@ -2,13 +2,6 @@ import numpy as np
 import pandas as pd
 import math
 
-def sum_2d_array(arr):
-    sum = 0
-    for i in range(len(arr)):
-        for j in range(len(arr[i])):
-            sum += arr[i][j]
-    return sum
-
 class Game:
     def __init__(self, tab, actions, actions2=[], asymetrical=False):
         self.actions = actions
@@ -174,3 +167,10 @@ ipd_scores =[(3,3),(0,5),(5,0),(1,1)]   # Prisoner's dilemma
 # print(g.scores["x"].max(0).repeat(g.size, axis=0))
 # print(type(g.scores["x"]))
 # print(g.scores["x"] == g.scores["x"].max(0).repeat(g.size, axis=0))
+
+# traffic example (with nondeterminism)
+traffic_nondeterminsm = [(2,2), (3.5, 1.5), (4, 2.5), (1.5, 3.5), (2.5, 2.5), (1.5, 2.5), (2.5, 4), (2.5, 1.5), (5,5)]
+traffic_nondeterminsm_actions = ['A-C', 'A-D', 'B']
+g = Game(traffic_nondeterminsm, traffic_nondeterminsm_actions)
+pi = g.getNash()
+print(pi)

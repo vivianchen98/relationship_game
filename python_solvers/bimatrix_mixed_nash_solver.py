@@ -159,10 +159,21 @@ B = [[2,1.5], [4, 3]]
 # x = (0, 1)
 # y = (0, 1)
 
-# solver = LemkeHowsonGameSolver(A, B)
-# x_normalized, y_normalized, (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
+# traffic example (with nondeterminism)
+traffic_nondeterminsm_A = [[2, 3.5, 4], [1.5, 2.5, 1.5], [2.5, 2.5, 5]]
+traffic_nondeterminsm_B = [[2, 1.5, 2.5], [3.5, 2.5, 2.5], [4, 1.5, 5]]
+traffic_nondeterminsm_actions = ['A-C', 'A-D', 'B']
+
+# chaining traffic 2 sections
+chain_2_A = [[4, 6, 6, 8], [3.5, 5, 5.5, 7], [3.5, 5.5, 5, 7], [3, 4.5, 4.5, 6]]
+chain_2_B = [[4, 3.5, 3.5, 3], [6, 5, 5.5, 4.5], [6, 5.5, 5, 4.5], [8, 7, 7, 6]]
+chain_actions = ['A-A', 'A-B', 'B-A', 'B-B']
+
+# solver = LemkeHowsonGameSolver(chain_2_A, chain_2_B)
+# (x_normalized, y_normalized), (pivots, ray_term, max_iters) = solver.solve_mixed_nash()
 # print("x: ", x_normalized)
 # print("y: ", y_normalized)
 # pi = [x_normalized, y_normalized]
 # support = solver.support(pi)
 # print(support)
+
