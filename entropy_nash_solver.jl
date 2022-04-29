@@ -36,7 +36,7 @@ Returns:
 - proper_termination: if the algorithm converges within given max_iter
 - max_iter: maximum number of iterations allowed
 """
-function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 1, ϵ = 0.1)
+function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 0.01)
     A, B = u[1], u[2]
     m, n = length(actions[1]), length(actions[2])
 
@@ -75,13 +75,14 @@ end
 
 
 # example: prisoner's dilemma
-u = 10 .* [[1 3; 0 2], [1 0; 3 2]]
+u = [[1 3; 0 2], [1 0; 3 2]]
 actions_1 = ["C", "D"]
 actions_2 = ["C", "D"]
 actions = [actions_1, actions_2]
 
-solver = EntropySolver()
-x, y, proper_termination, max_iter = solve_entropy_nash(solver, u, actions)
-@show x
-@show y
-@show proper_termination
+
+# solver = EntropySolver()
+# x, y, proper_termination, max_iter = solve_entropy_nash(solver, u_tilde, actions)
+# @show x
+# @show y
+# @show proper_termination
