@@ -48,7 +48,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
         J_g_wrt_w = - (phi[2,:,:]'[:,:] * [x'*A; y'*B] ./ λ)'
         J_F_wrt_w = [-J_s * J_f_wrt_w; -J_u * J_g_wrt_w]
 
-        ∂w = [∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w
+        ∂w = ([∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w)'
         @show ∂w
 
         ∂self, ∂u, ∂actions, ∂phi, ∂w
@@ -71,5 +71,5 @@ w = [.2, .8]
 x, y, info = solve_relationship_game(u, actions, phi, w)
 @show x
 @show y
-grad = jacobian(solve_relationship_game, u, actions, phi, w)
+grad = gradient(solve_relationship_game, u, actions, phi, w)
 @show grad
