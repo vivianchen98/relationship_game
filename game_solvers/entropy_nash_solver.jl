@@ -2,7 +2,7 @@ using Distributions
 using LinearAlgebra
 
 # entropy-regularized Nash solver
-Base.@kwdef struct EntropySolver 
+Base.@kwdef struct EntropySolver
     "The maximum number of iterations allowed."
     max_iter::Int = 1000
 end
@@ -69,20 +69,25 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 
 
     proper_termination = (total_iter < solver.max_iter)
 
-    (;x, y, proper_termination, solver.max_iter)
+    (;
+        x,
+        y,
+        info = (; proper_termination, solver.max_iter, λ, m, n),
+    )
 end
 
 
 
-# example: prisoner's dilemma
-u = [[1 3; 0 2], [1 0; 3 2]]
-actions_1 = ["C", "D"]
-actions_2 = ["C", "D"]
-actions = [actions_1, actions_2]
+# # example: prisoner's dilemma
+# u = [[1 3; 0 2], [1 0; 3 2]]
+# actions_1 = ["C", "D"]
+# actions_2 = ["C", "D"]
+# actions = [actions_1, actions_2]
 
 
 # solver = EntropySolver()
-# x, y, proper_termination, max_iter = solve_entropy_nash(solver, u_tilde, actions)
+# x, y, info = solve_entropy_nash(solver, u, actions)
 # @show x
 # @show y
-# @show proper_termination
+# @show info
+# @show info.λ
