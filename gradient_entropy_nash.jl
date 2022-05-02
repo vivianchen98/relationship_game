@@ -3,8 +3,9 @@ using LinearAlgebra
 include("game_solvers/entropy_nash_solver.jl")
 
 # Given a RG, find its entropy_nash solution
-function solve_relationship_game(u, actions, phi, w)  
-    u_tilde = u + sum(w .* phi) * u
+function solve_relationship_game(u, actions, phi, w)
+    # u_tilde = u + sum(w .* phi) * u
+    u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:size(u)[1], j in 1:size(u)[2], k in 1:size(u)[3]]
 
     solver = EntropySolver()
     res = solve_entropy_nash(solver, u_tilde, actions)
@@ -26,13 +27,13 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
     function solve_relationship_game_pullback(∂res)
         x, y = res.x, res.y
         proper_termination, max_iter, λ, m, n = res.info
-        A, B = u[1], u[2]
+        A, B = u[:,:,1], u[:,:,2]
 
         ∂self = NoTangent()
         ∂u = NoTangent()
         ∂actions = NoTangent()
         ∂phi = NoTangent()
-        
+
         # J_F
         s = softmax(-A * y ./ λ)
         u = softmax(-B' * x ./ λ)
@@ -44,12 +45,19 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
         # J_F_wrt_w
         J_s = softmax_jacobian(-A * y ./ λ)
         J_u = softmax_jacobian(-B' * x ./ λ)
-        J_f_wrt_w = - (phi[1,:,:]'[:,:] * [(A*y)'; (B*y)'] ./ λ)'
-        J_g_wrt_w = - (phi[2,:,:]'[:,:] * [x'*A; y'*B] ./ λ)'
+
+
+        # J_f_wrt_w = - (phi[1,:,:]'[:,:] * [(A*y)'; (B*y)'] ./ λ)'
+        # J_g_wrt_w = - (phi[2,:,:]'[:,:] * [x'*A; x'*B] ./ λ)'
+        # J_F_wrt_w = [-J_s * J_f_wrt_w; -J_u * J_g_wrt_w]
+        J_f_wrt_w = [ - (phi[1,:,k]' * [A[i,:]' ; B[i,:]'] * y ./ λ)
+                for i in 1:size(A)[1], k in 1:size(phi)[3]]
+
+        J_g_wrt_w = [ - (phi[2,:,k]' * [A[:,i]' ; B[:,i]'] * x ./ λ)
+                    for i in 1:size(A)[2], k in 1:size(phi)[3]]
         J_F_wrt_w = [-J_s * J_f_wrt_w; -J_u * J_g_wrt_w]
 
         ∂w = ([∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w)'
-        @show ∂w
 
         ∂self, ∂u, ∂actions, ∂phi, ∂w
     end
@@ -59,11 +67,11 @@ end
 
 
 # test
-u = [[1 3; 0 2];;; [1 0; 3 2]]
+u = [[1 3; 0 2];;;[1 0; 3 2]]
 actions = [["C", "D"], ["C", "D"]]
 phi = [[0 1; 2 0];;;[0 0; 1 0]]
 V = [3 2; 2 1]
-w = [.2, .8]
+w = [.5, .5]
 
 # @show evaluate(u, actions, phi, w)
 # @show gradient(evaluate, u, actions, phi, w)
@@ -71,5 +79,9 @@ w = [.2, .8]
 x, y, info = solve_relationship_game(u, actions, phi, w)
 @show x
 @show y
-grad = gradient(solve_relationship_game, u, actions, phi, w)
+
+# grad = gradient(solve_relationship_game, u, actions, phi, w)
+# @show grad
+
+grad = gradient(evaluate, u, actions, phi, w)
 @show grad

@@ -37,7 +37,7 @@ Returns:
 - max_iter: maximum number of iterations allowed
 """
 function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 0.01)
-    A, B = u[1], u[2]
+    A, B = u[:,:,1], u[:,:,2]
     m, n = length(actions[1]), length(actions[2])
 
     # initialize random mixed strategies
@@ -77,14 +77,13 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 
 end
 
 
-
-# # example: prisoner's dilemma
-# u = [[1 3; 0 2], [1 0; 3 2]]
+# example: prisoner's dilemma
+# u = [[1 3; 0 2];;; [1 0; 3 2]]
 # actions_1 = ["C", "D"]
 # actions_2 = ["C", "D"]
 # actions = [actions_1, actions_2]
-
-
+#
+#
 # solver = EntropySolver()
 # x, y, info = solve_entropy_nash(solver, u, actions)
 # @show x
