@@ -38,7 +38,7 @@ Returns:
 """
 function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 0.01)
     A, B = u[:,:,1], u[:,:,2]
-    m, n = length(actions[1]), length(actions[2])
+    m, n, N = size(u)
 
     # initialize random mixed strategies
     x = rand(Dirichlet(m, 1.0))     # for player 1 with m actions
@@ -72,7 +72,7 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 
     (;
         x,
         y,
-        info = (; proper_termination, solver.max_iter, λ, m, n),
+        info = (; proper_termination, solver.max_iter, λ, m, n, N),
     )
 end
 
@@ -82,11 +82,9 @@ end
 # actions_1 = ["C", "D"]
 # actions_2 = ["C", "D"]
 # actions = [actions_1, actions_2]
-#
-#
+
+
 # solver = EntropySolver()
 # x, y, info = solve_entropy_nash(solver, u, actions)
 # @show x
 # @show y
-# @show info
-# @show info.λ
