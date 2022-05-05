@@ -4,11 +4,11 @@ using LinearAlgebra
 # entropy-regularized Nash solver
 Base.@kwdef struct EntropySolver
     "The maximum number of iterations allowed."
-    max_iter::Int = 1000
+    max_iter::Int = 10000
 end
 
 # stable softmax
-function softmax(arr; θ=0.1)
+function softmax(arr; θ=1)
     e = exp.((arr .- maximum(arr)) * θ)
     return e./ sum(e)
 end
@@ -36,15 +36,20 @@ Returns:
 - proper_termination: if the algorithm converges within given max_iter
 - max_iter: maximum number of iterations allowed
 """
-function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 0.01)
+function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.8, ϵ = 0.0001)
     A, B = u[:,:,1], u[:,:,2]
     m, n, N = size(u)
 
     # initialize random mixed strategies
     x = rand(Dirichlet(m, 1.0))     # for player 1 with m actions
     y = rand(Dirichlet(n, 1.0))     # for player 2 with n actions
+    # x = [1/m for i in 1:m] # unifrom distribution of length K
+    # y = [1/n for i in 1:n] # unifrom distribution of length K
+
+
 
     total_iter = 0
+    J_F = nothing
     for i in 1:solver.max_iter
         total_iter = i
 
@@ -56,9 +61,14 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 
         J_u_wrt_x =  softmax_jacobian(u) * (-B' ./ λ)
         J_softmax = [zeros(m,m) J_s_wrt_y; J_u_wrt_x zeros(n,n)]
         J_F = I(m+n) - J_softmax
+        # @show J_F
 
         # step if not convergent yet
-        step = inv(J_F) * ([x;y] - [s;u])
+        # step = inv(J_F) * ([x;y] - [s;u])
+        β = 1
+        step = (J_F' * J_F + β * I(m+n)) \ J_F' * ([x;y] - [s;u])
+
+
         if norm(step, 2) < ϵ
             break
         else
@@ -68,23 +78,16 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = 0.005, ϵ = 
     end
 
     proper_termination = (total_iter < solver.max_iter)
+    # if !proper_termination
+    #     @show J_F
+    #     @show det(J_F)
+    # end
 
     (;
+        # x = softmax(-A * y ./ λ),
+        # y = softmax(-B' * x ./ λ),
         x,
         y,
         info = (; proper_termination, solver.max_iter, λ, m, n, N),
     )
 end
-
-
-# example: prisoner's dilemma
-# u = [[1 3; 0 2];;; [1 0; 3 2]]
-# actions_1 = ["C", "D"]
-# actions_2 = ["C", "D"]
-# actions = [actions_1, actions_2]
-
-
-# solver = EntropySolver()
-# x, y, info = solve_entropy_nash(solver, u, actions)
-# @show x
-# @show y

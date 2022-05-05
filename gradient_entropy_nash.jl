@@ -4,21 +4,27 @@ include("game_solvers/entropy_nash_solver.jl")
 
 # Given a RG, find its entropy_nash solution
 function solve_relationship_game(u, actions, phi, w)
-    # u_tilde = u + sum(w .* phi) * u
-    # u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:size(u)[1], j in 1:size(u)[2], k in 1:size(u)[3]]
-
     m, n, N = size(u)
     u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
 
     solver = EntropySolver()
     res = solve_entropy_nash(solver, u_tilde, actions)
-
+    # proper_termination = false
+    # res = nothing
+    # while !proper_termination
+    #     res = solve_entropy_nash(solver, u_tilde, actions)
+    #     proper_termination, max_iter, λ, m, n, N = res.info      
+    #     proper_termination = true  
+    #     if !proper_termination
+    #         println("Improper termination at w=$w")
+    #         @assert false
+    #     end
+    # end
     return res
 end
 
 function evaluate(u, actions, phi, w)
-    V = [2 3; 3 4]
-
+    V = sum(u[:,:,i] for i in 1:size(u)[3])
     x, y, info = solve_relationship_game(u, actions, phi, w)
     return x' * V * y
 end
@@ -65,14 +71,24 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
     res, solve_relationship_game_pullback
 end
 
-
-# test
-u = [[1 3; 0 2];;;[1 0; 3 2]] 
-actions = [["C", "D"], ["C", "D"]]
+# 2 player relationship 
 phi = [[0 1; 2 0];;;[0 0; 1 0]]
-V = [2 3; 3 4]
 w = [.5, .5]
 
+# test on prisoner's dilemma
+u = [[1 3; 0 2];;;[1 0; 3 2]] 
+actions = [["C", "D"], ["C", "D"]]
+V = [2 3; 3 4]
+
+# 2-player, 3-action example
+# u = [[1 2 3; 0 1 2; -1 0 1];;;[1 0 3; 3 2 1; -2 -1 0]] 
+# actions = [["A", "B", "C"], ["A", "B", "C"]]
+# V = [2 3 4; 3 4 5; 4 5 6]
+
+# 3-route example
+# u = [[2 4 4; 1.5 3 1.5; 2.5 2.5 5];;;[2 1.5 2.5; 4 3 2.5; 4 1.5 5]] 
+# actions = [["A", "B", "C"], ["A", "B", "C"]]
+# V = sum(u[:,:,i] for i in 1:2)
 
 x, y, info = solve_relationship_game(u, actions, phi, w)
 @show x
