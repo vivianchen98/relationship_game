@@ -1,6 +1,7 @@
 using Zygote, ChainRulesCore
 using LinearAlgebra
 include("game_solvers/entropy_nash_solver.jl")
+include("game_solvers/bimatrix_mixed_nash_solver.jl")
 
 # Given a RG, find its entropy_nash solution
 function solve_relationship_game(u, actions, phi, w)
@@ -9,22 +10,12 @@ function solve_relationship_game(u, actions, phi, w)
 
     solver = EntropySolver()
     res = solve_entropy_nash(solver, u_tilde, actions)
-    # proper_termination = false
-    # res = nothing
-    # while !proper_termination
-    #     res = solve_entropy_nash(solver, u_tilde, actions)
-    #     proper_termination, max_iter, λ, m, n, N = res.info      
-    #     proper_termination = true  
-    #     if !proper_termination
-    #         println("Improper termination at w=$w")
-    #         @assert false
-    #     end
-    # end
+
     return res
 end
 
-function evaluate(u, actions, phi, w)
-    V = sum(u[:,:,i] for i in 1:size(u)[3])
+
+function evaluate(u, actions, phi, w, V)
     x, y, info = solve_relationship_game(u, actions, phi, w)
     return x' * V * y
 end
@@ -43,6 +34,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
         ∂u = NoTangent()
         ∂actions = NoTangent()
         ∂phi = NoTangent()
+
 
         # J_F
         s = softmax(-A * y ./ λ)
@@ -71,34 +63,56 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, actions, phi
     res, solve_relationship_game_pullback
 end
 
-# 2 player relationship 
-phi = [[0 1; 2 0];;;[0 0; 1 0]]
-w = [.5, .5]
 
-# test on prisoner's dilemma
-u = [[1 3; 0 2];;;[1 0; 3 2]] 
-actions = [["C", "D"], ["C", "D"]]
-V = [2 3; 3 4]
 
-# 2-player, 3-action example
-# u = [[1 2 3; 0 1 2; -1 0 1];;;[1 0 3; 3 2 1; -2 -1 0]] 
-# actions = [["A", "B", "C"], ["A", "B", "C"]]
-# V = [2 3 4; 3 4 5; 4 5 6]
+# ************* EXAMPLES *************
+# prisoner's dilemma
+function prisoner()
+    name = "prisoner"
+    u = [[1 3; 0 2];;;[1 0; 3 2]]
+    actions = [["C", "D"], ["C", "D"]]
+    phi = [[0 1; 0 0];;;[0 0; 1 0]]
+    V = [-1 0; 0 0]
+    (; name=name, u=u, actions=actions, phi=phi, V=V)
+end 
 
-# 3-route example
-# u = [[2 4 4; 1.5 3 1.5; 2.5 2.5 5];;;[2 1.5 2.5; 4 3 2.5; 4 1.5 5]] 
-# actions = [["A", "B", "C"], ["A", "B", "C"]]
-# V = sum(u[:,:,i] for i in 1:2)
+# 2-route traffic
+function traffic2()
+    name = "traffic2"
+    u = [[2 4; 1.5 3];;;[2 1.5; 4 3]]
+    actions = [["A", "B"], ["A", "B"]]
+    phi = [[0 1; 0 0];;;[0 0; 1 0]]
+    # V = sum(u[:,:,i] for i in 1:2)
+    V = [-1 0; 0 0]
+    (; name=name, u=u, actions=actions, phi=phi, V=V)
+end
 
-x, y, info = solve_relationship_game(u, actions, phi, w)
-@show x
-@show y
+# 3-route traffic
+function traffic3()
+    name = "traffic3"
+    u = [[2 4 4; 1.5 3 1.5; 2.5 2.5 5];;;[2 1.5 2.5; 4 3 2.5; 4 1.5 5]] 
+    actions = [["A", "B", "C"], ["A", "B", "C"]]
+    phi = [[0 1; 2 0];;;[0 0; 1 0]]
+    V = sum(u[:,:,i] for i in 1:2)
+    (; name=name, u=u, actions=actions, phi=phi, V=V)
+end
 
-# grad = gradient(solve_relationship_game, u, actions, phi, w)
+
+# ************* DEFINE PROBLEM *************
+# game structure
+name, u, actions, phi, V = prisoner()
+
+# 2 player relationship weights
+w = [1, 1]
+
+
+# ************* SOLUTIONS *************
+# x, y, info = solve_relationship_game(u, actions, phi, w)
+# @show x
+# @show y
+
+# expected_V = evaluate(u, actions, phi, w, V) # Remember V is defined inside evaluate()!
+# @show expected_V
+
+# grad = gradient(evaluate, u, actions, phi, w, V)
 # @show grad
-
-expected_V = evaluate(u, actions, phi, w)
-@show expected_V
-
-grad = gradient(evaluate, u, actions, phi, w)
-@show grad
