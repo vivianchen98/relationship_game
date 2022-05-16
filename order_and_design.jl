@@ -1,36 +1,38 @@
-using JuMP
-using Gurobi
+using JuMP, Gurobi, MathOptInterface
 using LinearAlgebra
-using MathOptInterface
-# using BenchmarkTools
-include("game_solvers/bimatrix_mixed_nash_solver.jl")
+using TensorGames
 include("trafficN.jl")
 
 # order and design
 function order_and_design(N, A, u, V_matrix, phi, k)
-    # order
+
     MIN = minimum(V)
     
     while !all(x->x==(MIN-1), V)
-        a = convert(Tuple, argmax(V))
-        a = [i for i in a]
+        a = convert(Tuple, argmax(V)); a = [i for i in a]
+
         print("\n****************** Checking $a ******************\n")
 
        # call design
         @time found, w, z, obj_val = design(N, A, u, a, phi, k)
 
         if found
-            z_phi = sum(z[i]*phi[i] for i in eachindex(z)); u_tilde = u + z_phi * u
+            # compute resulting nash sol
+            z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
+            u_tilde = u + [sum(z_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
+            sol = compute_equilibrium(u_tilde); @show sol.x
 
-            solver = LemkeHowsonGameSolver()
-            x, y, info, _ = solve_mixed_nash(solver, u_tilde[1], u_tilde[2])
-            println("player 1", x)
-            println("player 2", y)
-            
-            
+            # determine if the nash equals expected a
+            correct_nash = true
+            for i in 1:N
+                if sol.x[i][a[i]] != 1
+                    correct_nash = false
+                    break
+                end
+            end
 
-
-            if x[a[1]] == 1 && y[a[2]] == 1 # Nash sol = a
+            # if nash correct, return w; elsewise inspect next best a
+            if correct_nash
                 return w
             else
                 println("\n z=($z) does not lead to a=($a)! Move to next best a.")
@@ -118,28 +120,28 @@ function prisoner()
     (; name=name, N=2, u=u, A=A, phi=phi, V=V)
 end 
 
-# M-route traffic
-function trafficM(M)
-    name = "traffic" * string(M)
-    u = generate_traffic(2, [M,M])
-    A = [[i for i in 1:M] for N=1:2]
-    phi = [[0 1; 0 0],[0 0; 1 0]]
-    V = zeros(M,M); V[2,1] = 1; V[1,1] = -1
-    (; name=name, N=2, u=u, A=A, phi=phi, V=V)
-end
-
+# N-player (<=3), M-route traffic
 function playerN_trafficM(N, M)
     name = "player"* string(N) * "_traffic" * string(M)
     N = N
     u = generate_traffic(N, [M for i in 1:N])
     A = [[i for i in 1:M] for j=1:N]
-    phi = [[0 1 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 1 0], [0 0 1; 0 0 0; 1 0 0]]
-    V = zeros([M for i in 1:N]...); V[1,1,1] = 1
+    if N == 2
+        phi = [[0 1; 0 0],[0 0; 1 0]]
+    elseif N == 3
+        phi = [[0 1 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 1 0], [0 0 1; 0 0 0; 1 0 0]]
+    end
+    V = zeros([M for i in 1:N]...)
+    if N == 2
+        V[1,1] = 1
+    elseif N == 3
+        V[1,1,1] = 1
+    end
     (; name=name, N=N, u=u, A=A, phi=phi, V=V)
 end
 
 # call order_and_design
-name, N, u, A, phi, V = playerN_trafficM(3, 2)
+name, N, u, A, phi, V = playerN_trafficM(2, 2)
 k = length(phi)
 w = order_and_design(N, A, u, V, phi, k)
 
