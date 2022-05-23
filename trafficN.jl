@@ -7,8 +7,8 @@ function generate_traffic(N=3, dim=[2,2,2])
 
     a(load)= 4 / load
     b(load) = 1.5 * load
-    c(load) = 2 * load
-    d(load) = 2.5 * load
+    c(load) = 1.5 * load
+    d(load) = 2 * load
     e(load) = 3 * load
     f(load) = 3.5 * load
 
