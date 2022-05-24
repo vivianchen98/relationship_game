@@ -64,7 +64,7 @@ Returns:
 - proper_termination: if the algorithm converges within given max_iter
 - max_iter: maximum number of iterations allowed
 """
-function solve_entropy_nash(solver::EntropySolver, u, actions; λ = args["lambda"], ϵ = args["epsilon"])
+function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = args["epsilon"])
     A, B = u[:,:,1], u[:,:,2]
     m, n, N = size(u)
 
@@ -89,14 +89,13 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = args["lambda
         J_u_wrt_x =  softmax_jacobian(u) * (-B' ./ λ)
         J_softmax = [zeros(m,m) J_s_wrt_y; J_u_wrt_x zeros(n,n)]
         J_F = I(m+n) - J_softmax
-        # @show J_F
 
-        # step if not convergent yet
+        # compute step
         # step = inv(J_F) * ([x;y] - [s;u])
-        β = 1
+        β = 0.1
         step = (J_F' * J_F + β * I(m+n)) \ J_F' * ([x;y] - [s;u])
 
-
+        # step if not convergent yet
         if norm(step, 2) < ϵ
             break
         else
@@ -106,10 +105,6 @@ function solve_entropy_nash(solver::EntropySolver, u, actions; λ = args["lambda
     end
 
     proper_termination = (total_iter < solver.max_iter)
-    # if !proper_termination
-    #     @show J_F
-    #     @show det(J_F)
-    # end
 
     (;
         x = softmax(-A * y ./ λ),
