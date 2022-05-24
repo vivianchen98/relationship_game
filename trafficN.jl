@@ -5,12 +5,17 @@ function generate_traffic(N=3, dim=[2,2,2])
     # @assert maximum(dim) <= 31 "Only support at most 31 actions!"
     @assert N==length(dim) "dimension for actions must match the number of players!"
 
-    a(load)= 4 / load
+    a(load)= 5 / load
     b(load) = 1.5 * load
     c(load) = 1.5 * load
     d(load) = 2 * load
+<<<<<<< HEAD
     e(load) = 3 * load
     f(load) = 3.5 * load
+=======
+    e(load) = 2.5 * load
+    f(load) = 3 * load
+>>>>>>> 3a4aeb8ecb97e3a0bb537ae0ae47bda4146fe691
 
     func_list = [[b,c,d,e,f] for i in 1:(maximum(dim)÷5+1)]; func_list = collect(Iterators.flatten(func_list))
     func_list = pushfirst!(func_list, a)
