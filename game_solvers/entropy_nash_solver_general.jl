@@ -64,9 +64,8 @@ function h(i, u, x)
     n = length(u)
     list_without_i = [s for s in 1:n]; deleteat!(list_without_i, i)
     pt_cost = u[i] .* prob_prod(x, list_without_i, CartesianIndices(u[i]))
-    h = sum(pt_cost, dims=list_without_i)
-    h = vec(h)
-    return h
+    out = sum(pt_cost, dims=list_without_i)
+    return vec(out)
 end
 
 function g(i, j, u, x)
@@ -92,17 +91,10 @@ Returns:
 - max_iter: maximum number of iterations allowed
 """
 function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = args["epsilon"])
-    # A, B = u[:,:,1], u[:,:,2]
-    # m, n, N = size(u)
     N = length(u)
 
     # initialize random mixed strategies
-    # x = rand(Dirichlet(m, 1.0))     # for player 1 with m actions
-    # y = rand(Dirichlet(n, 1.0))     # for player 2 with n actions
-    # x = [1/m for i in 1:m] # unifrom distribution of length K
-    # y = [1/n for i in 1:n] # unifrom distribution of length K
-
-    x = [[1/size(u[i])[i] for counter in 1:size(u[i])[i]] for i in 1:N]
+    x = [[1/size(u[i])[i] for counter in 1:size(u[i])[i]] for i in 1:N] # list of uniform distributions
     x_vec = collect(Iterators.flatten(x))
 
     total_iter = 0
@@ -110,38 +102,40 @@ function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = 
     for i in 1:solver.max_iter
         total_iter = i
 
-        # s = softmax(-A * y ./ λ)
-        # u = softmax(-B' * x ./ λ)
-        s = 
+        # s = softmax(-h(x_-i) ./ λ)
+        s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]    
 
+        # J_s(j)_wrt_x(i)
+        # J(i,j) = (i == j) ? (zeros(size(u[i])[i])) : (softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ))
+        J_softmax = zeros((length(x), length(s)))
+        for i in 1:length(x), j in 1:length(s)
+            if i == j
+                J_softmax[i,j] = zeros(size(u[i])[i])
+            else
+                J_softmax[i,j] = softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ)
+        end
 
-        # Jacobian of F([x;y]) = [x;y] - [s;u]
-        J_s_wrt_y =  softmax_jacobian(s) * (-A ./ λ)
-        J_u_wrt_x =  softmax_jacobian(u) * (-B' ./ λ)
-        J_softmax = [zeros(m,m) J_s_wrt_y; J_u_wrt_x zeros(n,n)]
-        J_F = I(m+n) - J_softmax
+        # Jacobian of F(x) = x - s
+        total_actions = sum(size(u[i])[i] for i in 1:N)
+        J_F = I(total_actions) - J_softmax
 
         # compute step
         # step = inv(J_F) * ([x;y] - [s;u])
         β = 0.1
-        step = (J_F' * J_F + β * I(m+n)) \ J_F' * ([x;y] - [s;u])
+        step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x - s)
 
         # step if not convergent yet
         if norm(step, 2) < ϵ
             break
         else
-            x -= step[1:m]
-            y -= step[m+1:m+n]
+            x -= step
         end
     end
 
     proper_termination = (total_iter < solver.max_iter)
 
     (;
-        x = softmax(-A * y ./ λ),
-        y = softmax(-B' * x ./ λ),
-        # x,
-        # y,
-        info = (; proper_termination, solver.max_iter, λ, m, n, N),
+        x = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
+        info = (; proper_termination, solver.max_iter, λ, N),
     )
 end
