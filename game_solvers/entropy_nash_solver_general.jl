@@ -72,9 +72,10 @@ function g(i, j, u, x)
     n = length(u)
     list_without_i_j = [s for s in 1:n]; deleteat!(list_without_i_j, sort([i,j]))
     pt_cost = u[i] .* prob_prod(x, list_without_i_j, CartesianIndices(u[i]))
-    h = sum(pt_cost, dims=list_without_i_j)
-    # h = vec(h)
-    return h
+    out = sum(pt_cost, dims=list_without_i_j)
+    out = permutedims(out, (i,j,list_without_i_j...))
+    out = reshape(out, (length(x[i]), length(x[j])))
+    return out
 end
 
 """
@@ -104,38 +105,53 @@ function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = 
 
         # s = softmax(-h(x_-i) ./ λ)
         s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]    
+        s_vec = collect(Iterators.flatten(s))
 
-        # J_s(j)_wrt_x(i)
-        # J(i,j) = (i == j) ? (zeros(size(u[i])[i])) : (softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ))
-        J_softmax = zeros((length(x), length(s)))
-        for i in 1:length(x), j in 1:length(s)
-            if i == j
-                J_softmax[i,j] = zeros(size(u[i])[i])
+        # J_s(j)_wrt_x(i) : try two sets of counters
+        J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ))
+        J_softmax = []
+        for i in 1:length(s)
+            row = []
+            for j in 1:length(x)
+                if isempty(row)
+                    row = J_submatrix(i,j)
+                else
+                    row = hcat(row, J_submatrix(i,j))
+                end
+            end
+            if isempty(J_softmax)
+                J_softmax = row
             else
-                J_softmax[i,j] = softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ)
+                J_softmax = vcat(J_softmax, row)
+            end
         end
+        # @show J_softmax
+        # @show size(J_softmax)
+        m, n = size(J_softmax)
+        total_actions = sum(size(u[i])[i] for i in 1:N)
+        @assert m == total_actions && n == total_actions
 
         # Jacobian of F(x) = x - s
-        total_actions = sum(size(u[i])[i] for i in 1:N)
         J_F = I(total_actions) - J_softmax
 
-        # compute step
-        # step = inv(J_F) * ([x;y] - [s;u])
+        # compute step = inv(J_F) * ([x;y] - [s;u])
         β = 0.1
-        step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x - s)
+        step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x_vec - s_vec)
 
         # step if not convergent yet
         if norm(step, 2) < ϵ
             break
         else
-            x -= step
+            x_vec -= step
         end
+
+        # x <- x_vec?? (update x here)
     end
 
     proper_termination = (total_iter < solver.max_iter)
 
     (;
-        x = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
+        x = [softmax(- h(i, u, x) ./ λ) for i in 1:N],
         info = (; proper_termination, solver.max_iter, λ, N),
     )
 end
