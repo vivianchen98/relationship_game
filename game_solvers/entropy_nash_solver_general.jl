@@ -78,6 +78,18 @@ function g(i, j, u, x)
     return out
 end
 
+function x_vec_to_x(x_vec, u)
+    num_actions = size(u[1])
+    idx_counter = 1
+    x = Vector{Vector{Float64}}()  ## Empty list of strategies
+    for ii in 1:length(num_actions)
+        x_ii = x_vec[idx_counter: idx_counter + num_actions[ii] - 1]
+        push!(x, x_ii)
+        idx_counter += num_actions[ii]
+    end
+    return x
+end
+
 """
 Compute entropy-regularized Nash mixed strategies by Newton's method
 
@@ -104,7 +116,7 @@ function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = 
         total_iter = i
 
         # s = softmax(-h(x_-i) ./ λ)
-        s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]    
+        s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
         s_vec = collect(Iterators.flatten(s))
 
         # J_s(j)_wrt_x(i) : try two sets of counters
@@ -145,7 +157,7 @@ function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = 
             x_vec -= step
         end
 
-        # x <- x_vec?? (update x here)
+        x_vec_to_x(x_vec, u) # x <- x_vec?? (update x here)
     end
 
     proper_termination = (total_iter < solver.max_iter)
