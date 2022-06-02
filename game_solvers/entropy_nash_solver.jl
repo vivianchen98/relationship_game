@@ -112,6 +112,6 @@ function solve_entropy_nash(solver::EntropySolver, A, B; λ = args["lambda"], ϵ
         y = softmax(-B' * x ./ λ),
         # x,
         # y,
-        info = (; proper_termination, solver.max_iter, λ, m, n, N),
+        info = (; proper_termination, total_iter, solver.max_iter, λ, m, n, N),
     )
 end

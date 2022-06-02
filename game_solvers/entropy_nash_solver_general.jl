@@ -33,7 +33,7 @@ args = parse_commandline()
 # entropy-regularized Nash solver
 Base.@kwdef struct EntropySolver
     "The maximum number of iterations allowed."
-    max_iter::Int = 10000
+    max_iter::Int = 1000
 end
 
 # stable softmax
@@ -110,7 +110,7 @@ function solve_entropy_nash_general(solver::EntropySolver, u; λ = args["lambda"
     if N == 2
         x1, x2, info = solve_entropy_nash(solver, u[1], u[2])
         x = [x1, x2]
-        proper_termination = info.proper_termination
+        proper_termination, total_iter = info.proper_termination, info.total_iter
     else
         # initialize random mixed strategies
         x = [[1/size(u[i])[i] for counter in 1:size(u[i])[i]] for i in 1:N] # list of uniform distributions
@@ -172,6 +172,6 @@ function solve_entropy_nash_general(solver::EntropySolver, u; λ = args["lambda"
 
     (;
         x = [softmax(- h(i, u, x) ./ λ) for i in 1:N],
-        info = (; proper_termination, solver.max_iter, λ, N),
+        info = (; proper_termination, total_iter, solver.max_iter, λ, N),
     )
 end
