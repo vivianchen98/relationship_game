@@ -1,7 +1,7 @@
 # script to generate N-player game matrix of traffic example
 
 function generate_traffic(N=3, dim=[2,2,2])
-    @assert N<=3 "Only support at most 3 players!"
+    @assert N<=4 "Only support at most 3 players!"
     # @assert maximum(dim) <= 31 "Only support at most 31 actions!"
     @assert N==length(dim) "dimension for actions must match the number of players!"
 
@@ -11,8 +11,6 @@ function generate_traffic(N=3, dim=[2,2,2])
     d(load) = 2 * load
     e(load) = 3 * load
     f(load) = 3.5 * load
-    e(load) = 2.5 * load
-    f(load) = 3 * load
 
     func_list = [[b,c,d,e,f] for i in 1:(maximum(dim)÷5+1)]; func_list = collect(Iterators.flatten(func_list))
     func_list = pushfirst!(func_list, a)
@@ -35,6 +33,14 @@ function generate_traffic(N=3, dim=[2,2,2])
                 load = count(x->(x==player), [i,j,k])
                 # cost_tensors[n][i,j,k] = (player==1) ? a(load) : b(load)
                 cost_tensors[n][i,j,k] = func_list[player](load)
+            end
+        end
+    elseif N == 4
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4]
+            for n=1:N
+                player = [i,j,k,l][n]
+                load = count(x->(x==player), [i,j,k,l])
+                cost_tensors[n][i,j,k,l] = func_list[player](load)
             end
         end
     end

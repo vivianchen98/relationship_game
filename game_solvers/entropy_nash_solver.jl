@@ -64,9 +64,10 @@ Returns:
 - proper_termination: if the algorithm converges within given max_iter
 - max_iter: maximum number of iterations allowed
 """
-function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = args["epsilon"])
-    A, B = u[:,:,1], u[:,:,2]
-    m, n, N = size(u)
+function solve_entropy_nash(solver::EntropySolver, A, B; λ = args["lambda"], ϵ = args["epsilon"])
+    # A, B = u[:,:,1], u[:,:,2]
+    # m, n, N = size(u)
+    N = 2; m, n = size(A)
 
     # initialize random mixed strategies
     # x = rand(Dirichlet(m, 1.0))     # for player 1 with m actions

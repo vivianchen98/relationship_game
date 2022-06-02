@@ -1,6 +1,7 @@
 using Distributions
 using LinearAlgebra
 using ArgParse
+include("entropy_nash_solver.jl")
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -103,64 +104,71 @@ Returns:
 - proper_termination: if the algorithm converges within given max_iter
 - max_iter: maximum number of iterations allowed
 """
-function solve_entropy_nash(solver::EntropySolver, u; λ = args["lambda"], ϵ = args["epsilon"])
+function solve_entropy_nash_general(solver::EntropySolver, u; λ = args["lambda"], ϵ = args["epsilon"])
     N = length(u)
 
-    # initialize random mixed strategies
-    x = [[1/size(u[i])[i] for counter in 1:size(u[i])[i]] for i in 1:N] # list of uniform distributions
-    x_vec = collect(Iterators.flatten(x))
+    if N == 2
+        x1, x2, info = solve_entropy_nash(solver, u[1], u[2])
+        x = [x1, x2]
+        proper_termination = info.proper_termination
+    else
+        # initialize random mixed strategies
+        x = [[1/size(u[i])[i] for counter in 1:size(u[i])[i]] for i in 1:N] # list of uniform distributions
+        x_vec = collect(Iterators.flatten(x))
 
-    total_iter = 0
-    J_F = nothing
-    for i in 1:solver.max_iter
-        total_iter = i
+        total_iter = 0
+        J_F = nothing
+        for i in 1:solver.max_iter
+            total_iter = i
 
-        # s = softmax(-h(x_-i) ./ λ)
-        s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
-        s_vec = collect(Iterators.flatten(s))
+            # s = softmax(-h(x_-i) ./ λ)
+            s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
+            s_vec = collect(Iterators.flatten(s))
 
-        # J_s(j)_wrt_x(i) : try two sets of counters
-        J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ))
-        J_softmax = []
-        for i in 1:length(s)
-            row = []
-            for j in 1:length(x)
-                if isempty(row)
-                    row = J_submatrix(i,j)
+            # J_s(j)_wrt_x(i) : try two sets of counters
+            J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(s[j]) * (-g(i,j,u,x) ./ λ))
+            J_softmax = []
+            for i in 1:length(s)
+                row = []
+                for j in 1:length(x)
+                    if isempty(row)
+                        row = J_submatrix(i,j)
+                    else
+                        row = hcat(row, J_submatrix(i,j))
+                    end
+                end
+                if isempty(J_softmax)
+                    J_softmax = row
                 else
-                    row = hcat(row, J_submatrix(i,j))
+                    J_softmax = vcat(J_softmax, row)
                 end
             end
-            if isempty(J_softmax)
-                J_softmax = row
+            # @show J_softmax
+            # @show size(J_softmax)
+            m, n = size(J_softmax)
+            total_actions = sum(size(u[i])[i] for i in 1:N)
+            @assert m == total_actions && n == total_actions
+
+            # Jacobian of F(x) = x - s
+            J_F = I(total_actions) - J_softmax
+
+            # compute step = inv(J_F) * ([x;y] - [s;u])
+            β = 0.1
+            step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x_vec - s_vec)
+
+            # step if not convergent yet
+            if norm(step, 2) < ϵ
+                break
             else
-                J_softmax = vcat(J_softmax, row)
+                x_vec -= step
             end
-        end
-        # @show J_softmax
-        # @show size(J_softmax)
-        m, n = size(J_softmax)
-        total_actions = sum(size(u[i])[i] for i in 1:N)
-        @assert m == total_actions && n == total_actions
 
-        # Jacobian of F(x) = x - s
-        J_F = I(total_actions) - J_softmax
-
-        # compute step = inv(J_F) * ([x;y] - [s;u])
-        β = 0.1
-        step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x_vec - s_vec)
-
-        # step if not convergent yet
-        if norm(step, 2) < ϵ
-            break
-        else
-            x_vec -= step
+            x_vec_to_x(x_vec, u) # x <- x_vec?? (update x here)
         end
 
-        x_vec_to_x(x_vec, u) # x <- x_vec?? (update x here)
+        proper_termination = (total_iter < solver.max_iter)
+    
     end
-
-    proper_termination = (total_iter < solver.max_iter)
 
     (;
         x = [softmax(- h(i, u, x) ./ λ) for i in 1:N],
