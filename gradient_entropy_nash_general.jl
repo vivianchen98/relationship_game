@@ -66,7 +66,8 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
         J_F_wrt_w = - [J_s * J_f_wrt_w; J_u * J_g_wrt_w]
 
         # ∂w = [∂x; ∂y] - (J_F)^-1 * J_F_wrt_w
-        ∂w = ([∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w)'
+        # ∂w = ([∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w)'
+        ∂w = (∂res.x' * inv(J_F) * J_F_wrt_w)'
 
         ∂self, ∂u, ∂phi, ∂w
     end
