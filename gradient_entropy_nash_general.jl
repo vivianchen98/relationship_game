@@ -6,21 +6,19 @@ include("trafficN.jl")
 
 # Given a RG, find its entropy_nash solution
 function solve_relationship_game(u, phi, w)
-    # m, n, N = size(u)
-    # u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
     N = length(u)
-    w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
+    w_phi = w' * phi
     u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
 
     solver = EntropySolver()
-    res = solve_entropy_nash(solver, u_tilde)
+    res = solve_entropy_nash_general(solver, u_tilde)
 
     return res
 end
 
 function evaluate(u, phi, w, V)
     x, info = solve_relationship_game(u, phi, w)
-    return 
+    return x[1]' * h(1, u, x)
 end
 
 
@@ -29,7 +27,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
 
     function solve_relationship_game_pullback(∂res)
         x = res.x
-        proper_termination, max_iter, λ, N = res.info
+        proper_termination, total_iter, max_iter, λ, N = res.info
         K = size(phi)[3]
         # A, B = u[:,:,1], u[:,:,2]
 
@@ -38,18 +36,27 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
         ∂phi = NoTangent()
 
         # J_F
-        # s = softmax(-A * y ./ λ)
-        # u = softmax(-B' * x ./ λ)
-        # J_s = softmax_jacobian(s)
-        # J_u = softmax_jacobian(u)
-
-        J_s = softmax_jacobian(x)
-        J_u = softmax_jacobian(y)
-
-        J_s_wrt_y =  J_s * (-A ./ λ)
-        J_u_wrt_x =  J_u * (-B' ./ λ)
-        J_softmax = [zeros(m,m) J_s_wrt_y; J_u_wrt_x zeros(n,n)]
-        J_F = I(m+n) - J_softmax
+        J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(x[j]) * (-g(i,j,u,x) ./ λ))
+        J_softmax = []
+        for i in 1:N
+            row = []
+            for j in 1:length(x)
+                if isempty(row)
+                    row = J_submatrix(i,j)
+                else
+                    row = hcat(row, J_submatrix(i,j))
+                end
+            end
+            if isempty(J_softmax)
+                J_softmax = row
+            else
+                J_softmax = vcat(J_softmax, row)
+            end
+        end
+        m, n = size(J_softmax)
+        total_actions = sum(size(u[i])[i] for i in 1:N)
+        @assert m == total_actions && n == total_actions
+        J_F = I(total_actions) - J_softmax
 
         # J_F_wrt_w
         J_f_wrt_w = [ - (phi[1,:,k]' * [A[i,:]' ; B[i,:]'] * y ./ λ)
@@ -105,3 +112,6 @@ function GradientDescent(g, stepsize, max_iter)
 
     return w, w_list, exp_val_list, terminate_step
 end    
+
+# phi = [[0 1 0; 0 0 0; 0 0 0];;;[0 0 1; 0 0 0; 0 0 0];;;[0 0 0; 1 0 0; 0 0 0];;;[0 0 0; 0 0 1; 0 0 0];;;[0 0 0; 0 0 0; 1 0 0];;;[0 0 0; 0 0 0; 0 1 0]]
+# phi = [[0 1 0; 0 0 0; 0 0 0], [0 0 1; 0 0 0; 0 0 0], [0 0 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 0 0], [0 0 0; 0 0 0; 1 0 0], [0 0 0; 0 0 0; 0 1 0]]
