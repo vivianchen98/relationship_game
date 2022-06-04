@@ -32,8 +32,9 @@ x, info = solve_entropy_nash_general(EntropySolver(), u)
 @show x
 @show info.total_iter
 
-w = ones(length(phi))
+# w = ones(length(phi))
+w = [0, 1, 0, 1, 0, 1]
 val = evaluate(u, phi, w, V)
 @show val
 
-# @show gradient(evaluate, u, phi, w, V)
+@show gradient(evaluate, u, phi, w, V)

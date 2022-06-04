@@ -42,7 +42,7 @@ function softmax(arr; θ=1)
     return e./ sum(e)
 end
 
-# jacobian matrix for a softmax distribution
+# jacobian matrix for a softmax distribution (given s = softmax(x))
 function softmax_jacobian(s)
     len_s = length(s)
     J_s = zeros(len_s, len_s)
@@ -63,6 +63,7 @@ end
 
 function h(i, u, x)
     n = length(u)
+    sum_dims = [s for s in 1:n]
     list_without_i = [s for s in 1:n]; deleteat!(list_without_i, i)
     pt_cost = u[i] .* prob_prod(x, list_without_i, CartesianIndices(u[i]))
     out = sum(pt_cost, dims=list_without_i)
@@ -167,7 +168,7 @@ function solve_entropy_nash_general(solver::EntropySolver, u; λ = args["lambda"
         end
 
         proper_termination = (total_iter < solver.max_iter)
-    
+
     end
 
     (;
