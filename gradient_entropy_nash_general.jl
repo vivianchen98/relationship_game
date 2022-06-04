@@ -4,15 +4,17 @@ include("game_solvers/entropy_nash_solver_general.jl")
 # include("game_solvers/bimatrix_mixed_nash_solver.jl")
 include("trafficN.jl")
 
-# Given a RG, find its entropy_nash solution
-function solve_relationship_game(u, phi, w)
+function create_u_tilde(u, phi, w)
     N = length(u)
     w_phi = w' * phi
     u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
+    return u_tilde
+end
 
-    solver = EntropySolver()
-    res = solve_entropy_nash_general(solver, u_tilde)
-
+# Given a RG, find its entropy_nash solution
+function solve_relationship_game(u, phi, w)
+    u_tilde = create_u_tilde(u, phi, w)
+    res = solve_entropy_nash_general(EntropySolver(), u_tilde)
     return res
 end
 
@@ -28,8 +30,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
     function solve_relationship_game_pullback(∂res)
         x = res.x
         proper_termination, total_iter, max_iter, λ, N = res.info
-        K = size(phi)[3]
-        # A, B = u[:,:,1], u[:,:,2]
+        # K = size(phi)[3]
 
         ∂self = NoTangent()
         ∂u = NoTangent()
@@ -53,21 +54,20 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
                 J_softmax = vcat(J_softmax, row)
             end
         end
+        # CHECK FOR CORRECT SIZE
         m, n = size(J_softmax)
         total_actions = sum(size(u[i])[i] for i in 1:N)
         @assert m == total_actions && n == total_actions
+
         J_F = I(total_actions) - J_softmax
 
         # J_F_wrt_w
-        J_f_wrt_w = [ - (phi[1,:,k]' * [A[i,:]' ; B[i,:]'] * y ./ λ)
-                for i in 1:m, k in 1:K]
-        J_g_wrt_w = [ - (phi[2,:,k]' * [A[:,i]' ; B[:,i]'] * x ./ λ)
-                    for i in 1:n, k in 1:K]
-        J_F_wrt_w = - [J_s * J_f_wrt_w; J_u * J_g_wrt_w]
+        u_tilde = create_u_tilde(u, phi, w)
+        J_h_i_wrt_w = h(i, sum(phi[r,i,j] * u_tilde[j] for j in 1:N), x)
+        J_F_wrt_w = softmax_jacobian(-h(i,create_u_tilde(u, phi, w), x) ./ λ) ./ λ * J_h_i_wrt_w
 
-        # ∂w = [∂x; ∂y] - (J_F)^-1 * J_F_wrt_w
-        # ∂w = ([∂res.x; ∂res.y]' * inv(J_F) * J_F_wrt_w)'
-        ∂w = (∂res.x' * inv(J_F) * J_F_wrt_w)'
+        # ∂w = ∂x - J_F_wrt_w \ J_F
+        ∂w = (∂res.x' * J_F_wrt_w \ J_F)'
 
         ∂self, ∂u, ∂phi, ∂w
     end
