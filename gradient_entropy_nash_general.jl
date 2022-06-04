@@ -20,7 +20,9 @@ end
 
 function evaluate(u, phi, w, V)
     x, info = solve_relationship_game(u, phi, w)
-    return x[1]' * h(1, u, x)
+    full_list = [s for s in 1:length(u)]
+    cost = V .* prob_prod(x, full_list, CartesianIndices(V))
+    return sum(cost)
 end
 
 
@@ -37,6 +39,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
         ∂phi = NoTangent()
 
         # J_F
+        N = length(u)
         J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(x[j]) * (-g(i,j,u,x) ./ λ))
         J_softmax = []
         for i in 1:N
