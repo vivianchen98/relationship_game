@@ -1,6 +1,8 @@
 using JuMP, Gurobi, MathOptInterface
 using LinearAlgebra
+using GameTheory
 using TensorGames
+
 include("trafficN.jl")
 
 # order and design
@@ -17,28 +19,29 @@ function order_and_design(N, A, u, V_matrix, phi, k)
         @time found, w, z, obj_val = design(N, A, u, a, phi, k)
 
         if found
+            return w
             # compute resulting nash sol
             # z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
-            w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
-            u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
-            sol = compute_equilibrium(u_tilde); @show sol.x
+            # w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
+            # u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
+            # sol = compute_equilibrium(u_tilde); @show sol.x
 
-            # determine if the nash equals expected a
-            correct_nash = true
-            for i in 1:N
-                if sol.x[i][a[i]] <= 0.99
-                    correct_nash = false
-                    break
-                end
-            end
+            # # determine if the nash equals expected a
+            # correct_nash = true
+            # for i in 1:N
+            #     if sol.x[i][a[i]] <= 0.99
+            #         correct_nash = false
+            #         break
+            #     end
+            # end
 
-            # if nash correct, return w; elsewise inspect next best a
-            if correct_nash
-                return w
-            else
-                println("\n w=($w) does not lead to a=($a)! Move to next best a.")
-                V[a...] = MAX + 1
-            end
+            # # if nash correct, return w; elsewise inspect next best a
+            # if correct_nash
+            #     return w
+            # else
+            #     println("\n w=($w) does not lead to a=($a)! Move to next best a.")
+            #     V[a...] = MAX + 1
+            # end
         else
             println("w not found! Move to next best a.")
             V[a...] = MAX + 1
@@ -144,18 +147,34 @@ function playerN_trafficM(N, M)
     end
     # V = sum(u[i] for i in 1:N)
     @show V
-    (; name=name, N=N, u=u, A=A, phi=phi, V=V)
+    (; name=name, u=u, A=A, phi=phi, V=V)
 end
 
 # call order_and_design
-name, N, u, A, phi, V = playerN_trafficM(3,2)
+N, M = 3, 2
+name, u, A, phi, V = playerN_trafficM(N, M)
 k = length(phi)
-
-# VERIFICATION
-# print("\n****** VERIFICATION ******\n")
-print("\n------ Orignal Game Sol -------\n")
-sol = compute_equilibrium(u)
-@show sol.x
 
 # design weights
 w = order_and_design(N, A, u, V, phi, k)
+
+# VERIFICATION
+println()
+print("\n****** SUMMARY ******\n")
+@show N
+@show M
+@show V
+@show argmin(V)
+
+print("\n------ Orignal Game Sol -------\n")
+# g = NormalFormGame([Player(u[i]) for i in 1:N]...)
+# @show pure_nash(g)
+@show compute_equilibrium(u).x
+
+print("\n------ Modifed Game Sol -------\n")
+@show w
+w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
+u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
+# g_tilde = NormalFormGame([Player(u_tilde[i]) for i in 1:N]...)
+# @show pure_nash(g_tilde)
+@show compute_equilibrium(u_tilde).x
