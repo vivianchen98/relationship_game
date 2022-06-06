@@ -2,8 +2,27 @@ using JuMP, Gurobi, MathOptInterface
 using LinearAlgebra
 # using GameTheory
 using TensorGames
-
+using ArgParse
 include("trafficN.jl")
+
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "--N"
+            help = "number of players"
+            arg_type = Int64
+            default = 2
+        "--M"
+            help = "number of actions"
+            arg_type = Int64
+            default = 2
+    end
+
+    return parse_args(s)
+end
+
+args = parse_commandline()
 
 # order and design
 function order_and_design(N, A, u, V_matrix, phi, k)
@@ -19,29 +38,29 @@ function order_and_design(N, A, u, V_matrix, phi, k)
         @time found, w, z, obj_val = design(N, A, u, a, phi, k)
 
         if found
-            return w
             # compute resulting nash sol
-            # z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
-            # w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
-            # u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
-            # sol = compute_equilibrium(u_tilde); @show sol.x
+            z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
+            w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
+            u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
+            sol = compute_equilibrium(u_tilde)
 
-            # # determine if the nash equals expected a
-            # correct_nash = true
-            # for i in 1:N
-            #     if sol.x[i][a[i]] <= 0.99
-            #         correct_nash = false
-            #         break
-            #     end
-            # end
+            # determine if the nash equals expected a
+            correct_nash = true
+            for i in 1:N
+                if sol.x[i][a[i]] <= 0.99
+                    correct_nash = false
+                    break
+                end
+            end
 
-            # # if nash correct, return w; elsewise inspect next best a
-            # if correct_nash
-            #     return w
-            # else
-            #     println("\n w=($w) does not lead to a=($a)! Move to next best a.")
-            #     V[a...] = MAX + 1
-            # end
+            # if nash correct, return w; elsewise inspect next best a
+            if correct_nash
+                return w
+                break
+            else
+                println("\n w=($w) does not lead to a=($a)! Move to next best a.")
+                V[a...] = MAX + 1
+            end
         else
             println("w not found! Move to next best a.")
             V[a...] = MAX + 1
@@ -90,8 +109,8 @@ function design(N, A, u, a, phi, k)
     @objective(model, Min, sum(z[i] for i in eachindex(z)))
 
     # print and solve
-    print("\n------ MODEL -------\n")
-    print(model)
+    # print("\n------ MODEL -------\n")
+    # print(model)
     total_num_constraints = num_constraints(model, AffExpr, MOI.GreaterThan{Float64}) + num_constraints(model, AffExpr, MOI.LessThan{Float64})
     
     optimize!(model)
@@ -131,32 +150,45 @@ end
 # N-player (<=3), M-route traffic
 function playerN_trafficM(N, M)
     name = "player"* string(N) * "_traffic" * string(M)
-    N = N
     u = generate_traffic(N, [M for i in 1:N])
     A = [[i for i in 1:M] for j=1:N]
-    if N == 2
-        phi = [[0 1; 0 0],[0 0; 1 0]]
-    elseif N == 3
-        phi = [[0 1 0; 0 0 0; 0 0 0], [0 0 1; 0 0 0; 0 0 0], [0 0 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 0 0], [0 0 0; 0 0 0; 1 0 0], [0 0 0; 0 0 0; 0 1 0]]
+
+    # if N == 2
+    #     phi = [[0 1; 0 0],[0 0; 1 0]]
+    # elseif N == 3
+    #     phi = [[0 1 0; 0 0 0; 0 0 0], [0 0 1; 0 0 0; 0 0 0], [0 0 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 0 0], [0 0 0; 0 0 0; 1 0 0], [0 0 0; 0 0 0; 0 1 0]]
+    # end
+
+    # phi
+    phi_list = Matrix{Int64}[]
+    for i in 1:N, j in 1:N
+        phi = zeros(Int64, N,N)
+        if i != j
+            phi[i,j] = 1
+            push!(phi_list, phi)
+        end
     end
-    V = zeros([M for i in 1:N]...)
-    if N == 2
-        V[1,1] = -1
-    elseif N == 3
-        V[1,1,1] = -1
-    end
-    # V = sum(u[i] for i in 1:N)
-    @show V
-    (; name=name, u=u, A=A, phi=phi, V=V)
+
+    # V = zeros([M for i in 1:N]...)
+    # if N == 2
+    #     V[1,1] = -1
+    # elseif N == 3
+    #     V[1,1,1] = -1
+    # end
+
+    # V
+    V = sum(u[i] for i in 1:N)
+
+    (; name=name, u=u, A=A, phi=phi_list, V=V)
 end
 
 # call order_and_design
-N, M = 3, 2
+N, M = args["N"], args["M"]
 name, u, A, phi, V = playerN_trafficM(N, M)
 k = length(phi)
 
 # design weights
-w = order_and_design(N, A, u, V, phi, k)
+@time w = order_and_design(N, A, u, V, phi, k)
 
 # VERIFICATION
 println()
@@ -164,12 +196,16 @@ print("\n****** SUMMARY ******\n")
 @show N
 @show M
 @show V
-@show argmin(V)
+V_min_a = argmin(V)
+@show V_min_a
 
 print("\n------ Orignal Game Sol -------\n")
 # g = NormalFormGame([Player(u[i]) for i in 1:N]...)
 # @show pure_nash(g)
-@show compute_equilibrium(u).x
+x = compute_equilibrium(u).x
+@show x
+a = [argmax(x[i]) for i in 1:N]
+@show a 
 
 print("\n------ Modifed Game Sol -------\n")
 @show w
@@ -177,4 +213,19 @@ w_phi = sum(w[i]*phi[i] for i in eachindex(w))
 u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
 # g_tilde = NormalFormGame([Player(u_tilde[i]) for i in 1:N]...)
 # @show pure_nash(g_tilde)
-@show compute_equilibrium(u_tilde).x
+x_tilde = compute_equilibrium(u_tilde).x
+@show x_tilde
+
+a_tilde = [argmax(x_tilde[i]) for i in 1:N]
+@show a_tilde
+
+open("order_and_design_output/player_$(N)_action_$(M)_$(V_min_a).txt", "w") do file
+    println(file, "N=$(N), M=$(M)")
+    println(file, "V: ", V)
+    println(file, "a: ", V_min_a)
+    println(file, "x: ", x)
+    println(file, "a: ", a)
+    println(file, "w: ", w)
+    println(file, "x_tilde: ", x_tilde)
+    println(file, "a_tilde: ", a_tilde)
+end
