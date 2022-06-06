@@ -26,6 +26,7 @@ args = parse_commandline()
 
 # order and design
 function order_and_design(N, A, u, V_matrix, phi, k)
+    total_constr = 0
 
     MAX = maximum(V)
     
@@ -35,7 +36,8 @@ function order_and_design(N, A, u, V_matrix, phi, k)
         print("\n****************** Checking $a ******************\n")
 
        # call design
-        @time found, w, z, obj_val = design(N, A, u, a, phi, k)
+        @time found, w, z, obj_val, num_constr = design(N, A, u, a, phi, k)
+        total_constr += num_constr
 
         if found
             # compute resulting nash sol
@@ -65,9 +67,9 @@ function order_and_design(N, A, u, V_matrix, phi, k)
             println("w not found! Move to next best a.")
             V[a...] = MAX + 1
         end
-        break
+        # break
     end
-
+    println("total_constr= $(total_constr)")
     return false
 end
 
@@ -133,7 +135,7 @@ function design(N, A, u, a, phi, k)
     # @show total_num_constraints
     # @assert false
 
-    (; found, w, z, obj_val)
+    (; found, w, z, obj_val, total_num_constraints)
 end
 
 # ************* EXAMPLES *************
@@ -169,15 +171,17 @@ function playerN_trafficM(N, M)
         end
     end
 
-    # V = zeros([M for i in 1:N]...)
-    # if N == 2
-    #     V[1,1] = -1
-    # elseif N == 3
-    #     V[1,1,1] = -1
-    # end
+    V = zeros([M for i in 1:N]...)
+    if N == 2
+        V[3,3] = -1
+    elseif N == 3
+        V[1,2,1] = -1
+    elseif N == 4
+        V[1,1,1,1] = -1
+    end
 
     # V
-    V = sum(u[i] for i in 1:N)
+    # V = sum(u[i] for i in 1:N)
 
     (; name=name, u=u, A=A, phi=phi_list, V=V)
 end
