@@ -1,6 +1,7 @@
 include("game_solvers/entropy_nash_solver_general.jl")
 include("gradient_entropy_nash_general.jl")
 include("trafficN.jl")
+using TensorGames
 
 # N-player (<=3), M-route traffic
 function playerN_trafficM(N, M)
@@ -37,4 +38,6 @@ w = [0, 1, 0, 1, 0, 1]
 val = evaluate(u, phi, w, V)
 @show val
 
-@show gradient(evaluate, u, phi, w, V)
+grad = gradient(evaluate, u, phi, w, V)[3]
+@show grad
+

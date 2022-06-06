@@ -1,6 +1,6 @@
 using JuMP, Gurobi, MathOptInterface
 using LinearAlgebra
-using GameTheory
+# using GameTheory
 using TensorGames
 
 include("trafficN.jl")
