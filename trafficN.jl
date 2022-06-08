@@ -1,7 +1,7 @@
 # script to generate N-player game matrix of traffic example
 
 function generate_traffic(N=3, dim=[2,2,2])
-    @assert N<=5 "Only support at most 5 players!"
+    @assert N<=20 "Only support at most 20 players!"
     # @assert maximum(dim) <= 31 "Only support at most 31 actions!"
     @assert N==length(dim) "dimension for actions must match the number of players!"
 
@@ -53,9 +53,65 @@ function generate_traffic(N=3, dim=[2,2,2])
                 cost_tensors[n][i,j,k,l,m] = func_list[player](load)
             end
         end
+    elseif N == 6
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6]
+            for n=1:N
+                player = [i,j,k,l,m, o][n]
+                load = count(x->(x==player), [i,j,k,l,m,o])
+                cost_tensors[n][i,j,k,l,m,o] = func_list[player](load)
+            end
+        end      
+    elseif N == 7
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7]
+            for n=1:N
+                player = [i,j,k,l,m,o,p][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p])
+                cost_tensors[n][i,j,k,l,m,o,p] = func_list[player](load)
+            end
+        end
+    elseif N == 8
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7], q=1:dim[8]
+            for n=1:N
+                player = [i,j,k,l,m,o,p,q][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p,q])
+                cost_tensors[n][i,j,k,l,m,o,p,q] = func_list[player](load)
+            end
+        end      
+    elseif N == 9
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7], q=1:dim[8], r=1:dim[9]
+            for n=1:N
+                player = [i,j,k,l,m,o,p,q,r][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p,q,r])
+                cost_tensors[n][i,j,k,l,m,o,p,q,r] = func_list[player](load)
+            end
+        end  
+    elseif N == 10
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7], q=1:dim[8], r=1:dim[9], s=1:dim[10]
+            for n=1:N
+                player = [i,j,k,l,m,o,p,q,r,s][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p,q,r,s])
+                cost_tensors[n][i,j,k,l,m,o,p,q,r,s] = func_list[player](load)
+            end
+        end  
+    elseif N == 15
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7], q=1:dim[8], r=1:dim[9], s=1:dim[10], t=1:dim[11], u=1:dim[12], v=1:dim[13], w=1:dim[14], x=1:dim[15]
+            for n=1:N
+                player = [i,j,k,l,m,o,p,q,r,s,t,u,v,w,x][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p,q,r,s,t,u,v,w,x])
+                cost_tensors[n][i,j,k,l,m,o,p,q,r,s,t,u,v,w,x] = func_list[player](load)
+            end
+        end 
+    elseif N == 20
+        for i=1:dim[1], j=1:dim[2], k=1:dim[3], l=1:dim[4], m=1:dim[5], o=1:dim[6], p=1:dim[7], q=1:dim[8], r=1:dim[9], s=1:dim[10], t=1:dim[11], u=1:dim[12], v=1:dim[13], w=1:dim[14], x=1:dim[15], i16=1:dim[16], i17=1:dim[17], i18=1:dim[18], i19=1:dim[19], i20=1:dim[20]
+            for n=1:N
+                player = [i,j,k,l,m,o,p,q,r,s,t,u,v,w,x,i16,i17,i18,i19,i20][n]
+                load = count(x->(x==player), [i,j,k,l,m,o,p,q,r,s,t,u,v,w,x,i16,i17,i18,i19,i20])
+                cost_tensors[n][i,j,k,l,m,o,p,q,r,s,t,u,v,w,x,i16,i17,i18,i19,i20] = func_list[player](load)
+            end
+        end    
+
     end
 
-    # cost_tensors = [cost_tensors[1];;;cost_tensors[2];;;cost_tensors[3]]
     return cost_tensors
 end
 
