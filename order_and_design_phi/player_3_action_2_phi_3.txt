@@ -18,85 +18,85 @@ Academic license - for non-commercial use only - expires 2023-05-11
 ****************** Checking [1, 1, 1] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = false
-  5.630532 seconds (10.85 M allocations: 621.989 MiB, 2.84% gc time, 99.78% compilation time)
+  5.831478 seconds (10.85 M allocations: 621.971 MiB, 3.15% gc time, 99.84% compilation time)
 w not found! Move to next best a.
 
 ****************** Checking [2, 1, 1] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = true
 obj_val = 0.0
-w = [0.0, 0.0, 0.0, 0.0]
-z = [0.0, 0.0, 0.0, 0.0]
-  0.303790 seconds (516.06 k allocations: 27.907 MiB, 5.91% gc time, 98.59% compilation time)
+w = [0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0]
+  0.311537 seconds (515.81 k allocations: 27.888 MiB, 6.59% gc time, 92.05% compilation time)
 x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
 
- w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([2, 1, 1])! Move to next best a.
+ w=([0.0, 0.0, 0.0]) does not lead to a=([2, 1, 1])! Move to next best a.
 
 ****************** Checking [1, 2, 1] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = true
 obj_val = 0.0
-w = [0.0, 0.0, 0.0, 0.0]
-z = [0.0, 0.0, 0.0, 0.0]
-  0.001958 seconds (2.88 k allocations: 181.625 KiB)
+w = [0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0]
+  0.001845 seconds (2.63 k allocations: 162.188 KiB)
 x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
 
- w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([1, 2, 1])! Move to next best a.
+ w=([0.0, 0.0, 0.0]) does not lead to a=([1, 2, 1])! Move to next best a.
 
 ****************** Checking [1, 1, 2] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = true
 obj_val = 0.0
-w = [0.0, 0.0, 0.0, 0.0]
-z = [0.0, 0.0, 0.0, 0.0]
-  0.001699 seconds (2.88 k allocations: 181.625 KiB)
+w = [0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0]
+  0.001993 seconds (2.63 k allocations: 162.188 KiB)
 x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
 
- w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([1, 1, 2])! Move to next best a.
+ w=([0.0, 0.0, 0.0]) does not lead to a=([1, 1, 2])! Move to next best a.
 
 ****************** Checking [2, 2, 1] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = false
-  0.001491 seconds (2.70 k allocations: 173.953 KiB)
+  0.001550 seconds (2.48 k allocations: 155.781 KiB)
 w not found! Move to next best a.
 
 ****************** Checking [2, 1, 2] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = false
-  0.001601 seconds (2.70 k allocations: 173.953 KiB)
+  0.001438 seconds (2.48 k allocations: 155.781 KiB)
 w not found! Move to next best a.
 
 ****************** Checking [1, 2, 2] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = false
-  0.001774 seconds (2.70 k allocations: 173.953 KiB)
+  0.001450 seconds (2.48 k allocations: 155.781 KiB)
 w not found! Move to next best a.
 
 ****************** Checking [2, 2, 2] ******************
 
 ------ RESULT -------
-total_num_constraints = 12
+total_num_constraints = 10
 found = true
 obj_val = 0.0
-w = [0.0, 0.0, 0.0, 0.0]
-z = [0.0, 0.0, 0.0, 0.0]
-  0.001566 seconds (2.88 k allocations: 181.625 KiB)
+w = [0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0]
+  0.001522 seconds (2.63 k allocations: 162.188 KiB)
 x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
- 11.031493 seconds (32.96 M allocations: 1.791 GiB, 6.46% gc time, 99.60% compilation time)
+ 11.573746 seconds (32.96 M allocations: 1.791 GiB, 6.70% gc time, 99.54% compilation time)
 
 
 ****** SUMMARY ******
@@ -110,6 +110,6 @@ x = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.64494943
 a = [2, 2, 2]
 
 ------ Modifed Game Sol -------
-w = [0.0, 0.0, 0.0, 0.0]
+w = [0.0, 0.0, 0.0]
 x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
 a_tilde = [2, 2, 2]
