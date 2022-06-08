@@ -1,0 +1,115 @@
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+
+****************** Checking [1, 1, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = false
+  5.589836 seconds (10.54 M allocations: 606.014 MiB, 3.25% gc time, 99.77% compilation time)
+w not found! Move to next best a.
+
+****************** Checking [2, 1, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = true
+obj_val = 0.0
+w = [0.0]
+z = [0.0]
+  0.286649 seconds (515.29 k allocations: 27.849 MiB, 98.52% compilation time)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0]) does not lead to a=([2, 1, 1])! Move to next best a.
+
+****************** Checking [1, 2, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = true
+obj_val = 0.0
+w = [0.0]
+z = [0.0]
+  0.001888 seconds (2.12 k allocations: 123.359 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0]) does not lead to a=([1, 2, 1])! Move to next best a.
+
+****************** Checking [1, 1, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = true
+obj_val = 0.0
+w = [0.0]
+z = [0.0]
+  0.001694 seconds (2.12 k allocations: 123.359 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0]) does not lead to a=([1, 1, 2])! Move to next best a.
+
+****************** Checking [2, 2, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = false
+  0.001591 seconds (2.02 k allocations: 119.656 KiB)
+w not found! Move to next best a.
+
+****************** Checking [2, 1, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = false
+  0.001585 seconds (2.02 k allocations: 119.656 KiB)
+w not found! Move to next best a.
+
+****************** Checking [1, 2, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = false
+  0.001665 seconds (2.02 k allocations: 119.656 KiB)
+w not found! Move to next best a.
+
+****************** Checking [2, 2, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 6
+found = true
+obj_val = 0.0
+w = [0.0]
+z = [0.0]
+  0.001530 seconds (2.12 k allocations: 123.359 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+ 11.437372 seconds (32.36 M allocations: 1.761 GiB, 6.88% gc time, 99.61% compilation time)
+
+
+****** SUMMARY ******
+N = 3
+M = 2
+V = [14.5 14.5; 14.5 14.5;;; 14.5 14.5; 14.5 13.5]
+V_min_a = CartesianIndex(2, 2, 2)
+
+------ Orignal Game Sol -------
+x = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+a = [2, 2, 2]
+
+------ Modifed Game Sol -------
+w = [0.0]
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+a_tilde = [2, 2, 2]

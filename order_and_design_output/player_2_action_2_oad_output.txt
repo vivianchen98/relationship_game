@@ -1,0 +1,30 @@
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+
+****************** Checking [1, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 7
+found = true
+obj_val = 0.2000000000000001
+w = [0.10000000000000003, 0.10000000000000003]
+z = [0.10000000000000005, 0.10000000000000005]
+  5.857100 seconds (10.87 M allocations: 625.511 MiB, 3.59% gc time, 99.76% compilation time)
+x_tilde = [[0.9999999999999988, 1.2212453270876722e-15], [0.9999999999999988, 1.2212453270876722e-15]]
+ 10.813403 seconds (32.01 M allocations: 1.744 GiB, 6.75% gc time, 99.77% compilation time)
+
+
+****** SUMMARY ******
+N = 2
+M = 2
+V = [3.3333333333333335 4.833333333333334; 4.833333333333334 6.0]
+V_min_a = CartesianIndex(1, 1)
+
+------ Orignal Game Sol -------
+x = [[0.0, 1.0], [0.0, 1.0]]
+a = [2, 2]
+
+------ Modifed Game Sol -------
+w = [0.10000000000000003, 0.10000000000000003]
+x_tilde = [[0.9999999999999988, 1.2212453270876722e-15], [0.9999999999999988, 1.2212453270876722e-15]]
+a_tilde = [1, 1]

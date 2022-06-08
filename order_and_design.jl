@@ -41,22 +41,15 @@ function order_and_design(N, A, u, V_matrix, phi, k)
 
         if found
             # compute resulting nash sol
-            z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
+            # z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
             w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
             u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
-            sol = compute_equilibrium(u_tilde)
+            x_tilde = compute_equilibrium(u_tilde).x
+            @show x_tilde
 
-            # determine if the nash equals expected a
-            correct_nash = true
-            for i in 1:N
-                if sol.x[i][a[i]] <= 0.99
-                    correct_nash = false
-                    break
-                end
-            end
-
-            # if nash correct, return w; elsewise inspect next best a
-            if correct_nash
+            # determine if the a_tilde ~ a
+            a_tilde = [argmax(x_tilde[i]) for i in 1:N]
+            if a_tilde == a
                 return w
                 break
             else
@@ -121,17 +114,13 @@ function design(N, A, u, a, phi, k)
     print("\n------ RESULT -------\n")
     @show total_num_constraints
     found = termination_status(model)== MathOptInterface.OPTIMAL; @show found
-    obj_val = objective_value(model); @show obj_val
-    w = value.(w); @show w
-    z = value.(z); @show z
-
-    # if found
-    #     obj_val = objective_value(model); @show obj_val
-    #     w = value.(w); @show w
-    #     z = value.(z); @show z
-    # else
-    #     w, obj_val = zeros(length(phi)), 0
-    # end
+    if found
+        obj_val = objective_value(model); @show obj_val
+        w = value.(w); @show w
+        z = value.(z); @show z
+    else
+        w, obj_val = zeros(length(phi)), 0
+    end
     # @show total_num_constraints
     # @assert false
 
@@ -155,12 +144,6 @@ function playerN_trafficM(N, M)
     u = generate_traffic(N, [M for i in 1:N])
     A = [[i for i in 1:M] for j=1:N]
 
-    # if N == 2
-    #     phi = [[0 1; 0 0],[0 0; 1 0]]
-    # elseif N == 3
-    #     phi = [[0 1 0; 0 0 0; 0 0 0], [0 0 1; 0 0 0; 0 0 0], [0 0 0; 1 0 0; 0 0 0], [0 0 0; 0 0 1; 0 0 0], [0 0 0; 0 0 0; 1 0 0], [0 0 0; 0 0 0; 0 1 0]]
-    # end
-
     # phi
     phi_list = Matrix{Int64}[]
     for i in 1:N, j in 1:N
@@ -170,18 +153,10 @@ function playerN_trafficM(N, M)
             push!(phi_list, phi)
         end
     end
-
-    V = zeros([M for i in 1:N]...)
-    if N == 2
-        V[3,3] = -1
-    elseif N == 3
-        V[1,2,1] = -1
-    elseif N == 4
-        V[1,1,1,1] = -1
-    end
+    phi_list = phi_list[1:6]
 
     # V
-    # V = sum(u[i] for i in 1:N)
+    V = sum(u[i] for i in 1:N)
 
     (; name=name, u=u, A=A, phi=phi_list, V=V)
 end
@@ -204,8 +179,6 @@ V_min_a = argmin(V)
 @show V_min_a
 
 print("\n------ Orignal Game Sol -------\n")
-# g = NormalFormGame([Player(u[i]) for i in 1:N]...)
-# @show pure_nash(g)
 x = compute_equilibrium(u).x
 @show x
 a = [argmax(x[i]) for i in 1:N]
@@ -215,21 +188,19 @@ print("\n------ Modifed Game Sol -------\n")
 @show w
 w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
 u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
-# g_tilde = NormalFormGame([Player(u_tilde[i]) for i in 1:N]...)
-# @show pure_nash(g_tilde)
 x_tilde = compute_equilibrium(u_tilde).x
 @show x_tilde
 
 a_tilde = [argmax(x_tilde[i]) for i in 1:N]
 @show a_tilde
 
-open("order_and_design_output/player_$(N)_action_$(M)_$(V_min_a).txt", "w") do file
-    println(file, "N=$(N), M=$(M)")
-    println(file, "V: ", V)
-    println(file, "a: ", V_min_a)
-    println(file, "x: ", x)
-    println(file, "a: ", a)
-    println(file, "w: ", w)
-    println(file, "x_tilde: ", x_tilde)
-    println(file, "a_tilde: ", a_tilde)
-end
+# open("order_and_design_output/player_$(N)_action_$(M)_$(V_min_a).txt", "w") do file
+#     println(file, "N=$(N), M=$(M)")
+#     println(file, "V: ", V)
+#     println(file, "a: ", V_min_a)
+#     println(file, "x: ", x)
+#     println(file, "a: ", a)
+#     println(file, "w: ", w)
+#     println(file, "x_tilde: ", x_tilde)
+#     println(file, "a_tilde: ", a_tilde)
+# end

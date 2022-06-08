@@ -1,0 +1,115 @@
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-05-11
+
+****************** Checking [1, 1, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = false
+  5.617707 seconds (10.85 M allocations: 621.989 MiB, 3.26% gc time, 99.77% compilation time)
+w not found! Move to next best a.
+
+****************** Checking [2, 1, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = true
+obj_val = 0.0
+w = [0.0, 0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0, 0.0]
+  0.288573 seconds (516.06 k allocations: 27.907 MiB, 98.51% compilation time)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([2, 1, 1])! Move to next best a.
+
+****************** Checking [1, 2, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = true
+obj_val = 0.0
+w = [0.0, 0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0, 0.0]
+  0.001859 seconds (2.88 k allocations: 181.625 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([1, 2, 1])! Move to next best a.
+
+****************** Checking [1, 1, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = true
+obj_val = 0.0
+w = [0.0, 0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0, 0.0]
+  0.001660 seconds (2.88 k allocations: 181.625 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+
+ w=([0.0, 0.0, 0.0, 0.0]) does not lead to a=([1, 1, 2])! Move to next best a.
+
+****************** Checking [2, 2, 1] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = false
+  0.001487 seconds (2.70 k allocations: 173.953 KiB)
+w not found! Move to next best a.
+
+****************** Checking [2, 1, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = false
+  0.001681 seconds (2.70 k allocations: 173.953 KiB)
+w not found! Move to next best a.
+
+****************** Checking [1, 2, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = false
+  0.001960 seconds (2.70 k allocations: 173.953 KiB)
+w not found! Move to next best a.
+
+****************** Checking [2, 2, 2] ******************
+
+------ RESULT -------
+total_num_constraints = 12
+found = true
+obj_val = 0.0
+w = [0.0, 0.0, 0.0, 0.0]
+z = [0.0, 0.0, 0.0, 0.0]
+  0.001620 seconds (2.88 k allocations: 181.625 KiB)
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+ 11.046191 seconds (32.96 M allocations: 1.791 GiB, 6.59% gc time, 99.60% compilation time)
+
+
+****** SUMMARY ******
+N = 3
+M = 2
+V = [14.5 14.5; 14.5 14.5;;; 14.5 14.5; 14.5 13.5]
+V_min_a = CartesianIndex(2, 2, 2)
+
+------ Orignal Game Sol -------
+x = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+a = [2, 2, 2]
+
+------ Modifed Game Sol -------
+w = [0.0, 0.0, 0.0, 0.0]
+x_tilde = [[0.35505056283930164, 0.6449494371606983], [0.35505056283930303, 0.644949437160697], [0.355050562839305, 0.644949437160695]]
+a_tilde = [2, 2, 2]
