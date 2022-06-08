@@ -1,7 +1,6 @@
 include("visualize_entropy_nash_general.jl")
 include("trafficN.jl")
 
-
 # ************* EXAMPLES *************
 # prisoner's dilemma
 function prisoner()
