@@ -10,7 +10,7 @@ function parse_commandline()
         "--lambda"
             help = "temperature"
             arg_type = Float64
-            default = 0.1
+            default = 0.01
         "--epsilon"
             help = "Newton's convergence threshold"
             arg_type = Float64
@@ -72,6 +72,13 @@ end
 
 function g(i, j, u, x)
     n = length(u)
+    if n == 2
+        if i < j
+            return u[i]
+        else
+            return u[i]'
+        end
+    end
     list_without_i_j = [s for s in 1:n]; deleteat!(list_without_i_j, sort([i,j]))
     pt_cost = u[i] .* prob_prod(x, list_without_i_j, CartesianIndices(u[i]))
     out = sum(pt_cost, dims=list_without_i_j)
