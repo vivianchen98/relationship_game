@@ -6,12 +6,11 @@ include("trafficN.jl")
 
 # Given a RG, find its entropy_nash solution
 function solve_relationship_game(u, phi, w)
-    m, n, N = size(u)
-    u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
-
+    # m, n, N = size(u)
+    # u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
+    create_u_tilde(u, phi, w)
     solver = EntropySolver()
     res = solve_entropy_nash(solver, u_tilde)
-
     return res
 end
 
@@ -79,7 +78,7 @@ function GradientDescent(g, stepsize, max_iter)
     push!(exp_val_list, evaluate(g.u, g.phi, w, g.V))
     println("start with w=($w)")
 
-    for i in 1:max_iter 
+    for i in 1:max_iter
         ∂w = gradient(evaluate, g.u, g.phi, w, g.V)[3]
         w = w + stepsize .* ∂w
         push!(w_list, w)
@@ -102,4 +101,4 @@ function GradientDescent(g, stepsize, max_iter)
     end
 
     return w, w_list, exp_val_list, terminate_step
-end    
+end

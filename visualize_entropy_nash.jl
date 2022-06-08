@@ -1,24 +1,22 @@
 using Plots
 using Zygote, ChainRulesCore
-include("game_solvers/entropy_nash_solver.jl")
+include("game_solvers/entropy_nash_solver_general.jl")
+include("gradient_entropy_nash_general.jl")
 include("game_solvers/bimatrix_mixed_nash_solver.jl")
-include("gradient_entropy_nash.jl")
 include("trafficN.jl")
 
 # E[V] on w
 function expectedValue(u, phi, w, V)
-    m, n, N = size(u)
-    u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
-
     if args["nash_type"] == "entropy_nash"
         solver = EntropySolver()
-        x, y, info = solve_entropy_nash(solver, u_tilde)
-    elseif args["nash_type"] == "nash"
+        return evaluate(u, phi, w, V)
+    elseif args["nash_type"] == "nash" ## 2-players only
+        m, n, N = size(u)
+        u_tilde = u + [ (phi[k,:,:] * w)' * u[i,j,:] for i in 1:m, j in 1:n, k in 1:N]
         solver = LemkeHowsonGameSolver()
         x, y, info, _ = solve_mixed_nash(solver, u_tilde[:,:,1], u_tilde[:,:,2])
+        return x' * V * y
     end
-
-    return x' * V * y
 end
 
 # Surface plot
@@ -29,7 +27,7 @@ function plot_surface(u, phi, V, output_name, axis_length)
     f(w1, w2) = expectedValue(u, phi, [w1, w2], V)
     s = surface(w1, w2, f, camera=(30,40))
     plot(s)
-    
+
     output_path = ""
     if args["nash_type"] == "nash"
         output_path = "clean_results/$(output_name)_$(args["nash_type"])_surface.png"
@@ -83,7 +81,7 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
     elseif args["nash_type"] == "entropy_nash"
         output_path = "clean_results/$(output_name)_$(args["nash_type"])_λ=$(args["lambda"])_heatmap.png"
     end
-    
+
     savefig(output_path)
     println("Heatmap plot saved to '$(output_path)'")
     println()
