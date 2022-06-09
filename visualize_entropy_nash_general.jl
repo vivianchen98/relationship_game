@@ -2,7 +2,6 @@ using Plots
 using Zygote, ChainRulesCore
 using TensorGames
 include("game_solvers/entropy_nash_solver_general.jl")
-include("game_solvers/bimatrix_mixed_nash_solver.jl")
 include("gradient_entropy_nash_general.jl")
 include("trafficN.jl")
 
@@ -78,9 +77,9 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
 
     output_path = ""
     if args["nash_type"] == "nash"
-        output_path = "clean_results/$(output_name)_$(args["nash_type"])_heatmap.png"
+        output_path = "general_results/$(output_name)_$(args["nash_type"])_heatmap.png"
     elseif args["nash_type"] == "entropy_nash"
-        output_path = "clean_results/$(output_name)_$(args["nash_type"])_λ=$(args["lambda"])_heatmap.png"
+        output_path = "general_results/$(output_name)_$(args["nash_type"])_λ=$(args["lambda"])_heatmap.png"
     end
     
     savefig(output_path)
