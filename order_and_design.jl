@@ -153,7 +153,7 @@ function playerN_trafficM(N, M)
             push!(phi_list, phi)
         end
     end
-    phi_list = phi_list[1:6]
+    phi_list = phi_list[1:3]
 
     # V
     V = sum(u[i] for i in 1:N)
