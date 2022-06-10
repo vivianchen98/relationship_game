@@ -144,21 +144,47 @@ function playerN_trafficM(N, M)
     u = generate_traffic(N, [M for i in 1:N])
     A = [[i for i in 1:M] for j=1:N]
 
-    # phi
-    phi_list = Matrix{Int64}[]
+    # phi_individual
+    phi_individual = Matrix{Int64}[]
     for i in 1:N, j in 1:N
         phi = zeros(Int64, N,N)
         if i != j
             phi[i,j] = 1
-            push!(phi_list, phi)
+            push!(phi_individual, phi)
         end
     end
-    phi_list = phi_list[1:3]
+    # phi_individual = phi_individual[1:3]
+
+    # phi_all_people
+    phi_all_people = Matrix{Int64}[]
+    for i in 1:N
+        phi = zeros(Int64, N,N)
+        for j in 1:N
+            if i != j
+                phi[i,j] = 1
+            end
+        end
+        push!(phi_all_people, phi)
+    end
+
+    # phi_reciprocity
+    phi_reciprocity = Matrix{Int64}[]
+    for i in 1:N, j in 1:N
+        phi = zeros(Int64, N,N)
+        if i != j
+            phi[i,j] = 1
+            phi[j,i] = 1
+            if !(phi in phi_reciprocity)    
+                push!(phi_reciprocity, phi)
+            end
+        end
+    end
+
 
     # V
     V = sum(u[i] for i in 1:N)
 
-    (; name=name, u=u, A=A, phi=phi_list, V=V)
+    (; name=name, u=u, A=A, phi=phi_all_people[1:3], V=V)
 end
 
 # call order_and_design
