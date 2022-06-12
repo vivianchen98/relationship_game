@@ -13,6 +13,7 @@ end
 
 # Gradient of u_tilde (modified utilities) wrt w [tensor form]
 function u_tilde_i_grad_w(u, phi, i)
+    N = length(u)
     return cat([sum(phi[r][i,j] * u[j] for j in 1:N) for r in 1:length(phi)]..., dims=length(u) + 1)
 end
 
