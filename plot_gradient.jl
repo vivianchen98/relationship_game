@@ -42,9 +42,9 @@ function playerN_trafficM(N, M)
     # V
     V = sum(u[i] for i in 1:N)
 
-    (; name=name, N=N, u=u, A=A, phi=phi_list, V=V)
+    (; name=name, N=N, u=u, A=A, phi=phi_list[[1,3]], V=V)
 end
 
 # ************* PLOTTING *************
-plotting(playerN_trafficM(3,2), "surface", c=10, axis_length=10)
-plotting(playerN_trafficM(3,2), "heatmap", c=10, axis_length=10)
+#plotting(playerN_trafficM(3,2), "surface", c=0.5, axis_length=10)
+plotting(playerN_trafficM(3,2), "heatmap", c=0.5, axis_length=10)
