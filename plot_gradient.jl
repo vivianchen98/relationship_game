@@ -12,39 +12,55 @@ function prisoner()
     (; name=name, u=u, phi=phi, V=V)
 end
 
-# M-route traffic
-function trafficM(M)
-    name = "traffic" * string(M)
-    u = generate_traffic(2, [M,M])#; u = [u[1];;;u[2]]
-    phi = [[0 1; 0 0],[0 0; 1 0]]
-    V = zeros(M,M); V[2,1] = -1; V[1,1] = -1
-    # V = sum(u[:,:,i] for i in 1:2)
-    (; name=name, u=u, phi=phi, V=V)
-end
-
-# N-player (<=4), M-route traffic
+# N-player (<=3), M-route traffic
 function playerN_trafficM(N, M)
     name = "player"* string(N) * "_traffic" * string(M)
-    N = N
     u = generate_traffic(N, [M for i in 1:N])
     A = [[i for i in 1:M] for j=1:N]
 
-    # phi
-    phi_list = Matrix{Int64}[]
+    # phi_individual
+    phi_individual = Matrix{Int64}[]
     for i in 1:N, j in 1:N
         phi = zeros(Int64, N,N)
         if i != j
             phi[i,j] = 1
-            push!(phi_list, phi)
+            push!(phi_individual, phi)
         end
     end
+    # phi_individual = phi_individual[1:3]
+
+    # phi_all_people
+    phi_all_people = Matrix{Int64}[]
+    for i in 1:N
+        phi = zeros(Int64, N,N)
+        for j in 1:N
+            if i != j
+                phi[i,j] = 1
+            end
+        end
+        push!(phi_all_people, phi)
+    end
+
+    # phi_reciprocity
+    phi_reciprocity = Matrix{Int64}[]
+    for i in 1:N, j in 1:N
+        phi = zeros(Int64, N,N)
+        if i != j
+            phi[i,j] = 1
+            phi[j,i] = 1
+            if !(phi in phi_reciprocity)    
+                push!(phi_reciprocity, phi)
+            end
+        end
+    end
+
 
     # V
     V = sum(u[i] for i in 1:N)
 
-    (; name=name, N=N, u=u, A=A, phi=phi_list[[1,3]], V=V)
+    (; name=name, u=u, A=A, phi=phi_individual[1:2], V=V)
 end
 
 # ************* PLOTTING *************
 #plotting(playerN_trafficM(3,2), "surface", c=0.5, axis_length=10)
-plotting(playerN_trafficM(3,2), "heatmap", c=0.5, axis_length=10)
+plotting(playerN_trafficM(3,3), "heatmap", c=0.5, axis_length=10)
