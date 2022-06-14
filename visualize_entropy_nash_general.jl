@@ -6,7 +6,7 @@ include("gradient_entropy_nash_general.jl")
 include("trafficN.jl")
 
 # E[V] on w
-function expectedValue(u, phi, w, V)
+function expectedValue(u, phi, w, V, gamma = 1)
     u_tilde = create_u_tilde(u, phi, w)
 
     if args["nash_type"] == "entropy_nash"
@@ -16,7 +16,7 @@ function expectedValue(u, phi, w, V)
     end
 
     cost = V .* prob_prod(x, [s for s in 1:length(u)], CartesianIndices(V))
-    return sum(cost)
+    return sum(cost) + gamma * norm(w, 1)
 end
 
 # Surface plot
@@ -27,7 +27,7 @@ function plot_surface(u, phi, V, output_name, axis_length)
     f(w1, w2) = expectedValue(u, phi, [w1, w2], V)
     s = surface(w1, w2, f, camera=(30,40))
     plot(s)
-    
+
     output_path = ""
     if args["nash_type"] == "nash"
         output_path = "general_results/$(output_name)_$(args["nash_type"])_surface.png"
@@ -81,7 +81,7 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
     elseif args["nash_type"] == "entropy_nash"
         output_path = "general_results/$(output_name)_$(args["nash_type"])_λ=$(args["lambda"])_heatmap.png"
     end
-    
+
     savefig(output_path)
     println("Heatmap plot saved to '$(output_path)'")
     println()

@@ -41,13 +41,15 @@ function solve_relationship_game(u, phi, w)
     return res
 end
 
-function evaluate(u, phi, w, V)
+function evaluate(u, phi, w, V, gamma = 1)
     x, info = solve_relationship_game(u, phi, w)
     # full_list = [s for s in 1:length(u)]
     # cost = V .* prob_prod(x, full_list, CartesianIndices(V))
     # return sum(cost)
-    return strategy_cost(x, V)
+    return strategy_cost(x, V) + gamma * norm(w, 1)
 end
+
+
 
 #global cost of a strategy profile
 function strategy_cost(x, V)
@@ -126,7 +128,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
         #J_F_wrt_w = softmax_jacobian(s) ./ λ) ./ λ * J_h_i_wrt_w #softmax_jacobian(-h(i,create_u_tilde(u, phi, w), x) ./ λ) ./ λ * J_h_i_wrt_w
 
         # ∂x/∂w = - J_F \ J_F_wrt_w
-        ∂w = (∂x_vec' * (J_F \ J_F_wrt_w))'
+        ∂w = - (∂x_vec' * (J_F \ J_F_wrt_w))'
 
         ∂self, ∂u, ∂phi, ∂w
     end
@@ -136,7 +138,7 @@ end
 
 
 # Gradient Descent of social cost V on weight vector w
-function GradientDescent(g, stepsize, max_iter)
+function GradientDescent(g, stepsize, max_iter, gamma=1)
     w_list = Vector{Vector{Float64}}()
     exp_val_list = Vector{Float64}()
     terminate_step = 0
@@ -145,14 +147,14 @@ function GradientDescent(g, stepsize, max_iter)
     K = length(g.phi)
     w = [1/K for i in 1:K] # unifrom distribution of length K
     push!(w_list, w)
-    push!(exp_val_list, evaluate(g.u, g.phi, w, g.V))
+    push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
     println("start with w=($w)")
 
     for i in 1:max_iter
-        ∂w = gradient(evaluate, g.u, g.phi, w, g.V)[3]
-        w = w + stepsize .* ∂w
+        ∂w = gradient(evaluate, g.u, g.phi, w, g.V, gamma)[3]
+        w = w - stepsize .* ∂w
         push!(w_list, w)
-        push!(exp_val_list, evaluate(g.u, g.phi, w, g.V))
+        push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
         if i % 1000 == 0
             # @show w
             # @show norm(∂w)

@@ -14,9 +14,9 @@ function solve_relationship_game(u, phi, w)
     return res
 end
 
-function evaluate(u, phi, w, V)
+function evaluate(u, phi, w, V, gamma = 1)
     x, y, info = solve_relationship_game(u, phi, w)
-    return x' * V * y
+    return x' * V * y + gamma * norm(w, 1)
 end
 
 

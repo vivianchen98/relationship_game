@@ -39,7 +39,7 @@ function playerN_trafficM(N, M)
         if i != j
             phi[i,j] = 1
             phi[j,i] = 1
-            if !(phi in phi_reciprocity)    
+            if !(phi in phi_reciprocity)
                 push!(phi_reciprocity, phi)
             end
         end
@@ -66,7 +66,8 @@ end
 # grad = gradient(evaluate, u, phi, w, V)[3]
 # @show grad
 name, N, u, A, phi, V = playerN_trafficM(3,2)
-@time w, w_list, exp_val_list, terminate_step = GradientDescent(playerN_trafficM(3,2), 0.01, 1000)
+gamma = 1
+@time w, w_list, exp_val_list, terminate_step = GradientDescent(playerN_trafficM(3,2), 0.01, 1000, gamma)
 # @show w
 # @show terminate_step
 
@@ -76,7 +77,7 @@ plot!(10.3 * ones(length(exp_val_list)), label="Nash")
 savefig("exp_val_list.png")
 
 # print("\n------ Modifed Game Sol -------\n")
-# w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
+# w_phi = sum(w[i]*phi[i] for i in eachindex(w))
 # u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
 # x_tilde = compute_equilibrium(u_tilde).x
 # @show x_tilde
