@@ -1,7 +1,6 @@
 using Zygote, ChainRulesCore
 using LinearAlgebra
 include("game_solvers/entropy_nash_solver_general.jl")
-# include("game_solvers/bimatrix_mixed_nash_solver.jl")
 include("trafficN.jl")
 
 function create_u_tilde(u, phi, w)
@@ -43,12 +42,8 @@ end
 
 function evaluate(u, phi, w, V, gamma = 1)
     x, info = solve_relationship_game(u, phi, w)
-    # full_list = [s for s in 1:length(u)]
-    # cost = V .* prob_prod(x, full_list, CartesianIndices(V))
-    # return sum(cost)
     return strategy_cost(x, V) + gamma * norm(w, 1)
 end
-
 
 
 #global cost of a strategy profile
@@ -176,3 +171,18 @@ function GradientDescent(g, stepsize, max_iter, gamma=1)
     # return w, w_list, exp_val_list, terminate_step
     return w, terminate_step
 end
+
+# create traffic example
+# name, N, u, A, phi, V = playerN_trafficM(3,2)
+# k = length(phi)
+
+# x, info = solve_entropy_nash_general(EntropySolver(), u)
+# @show x
+# @show info.total_iter
+
+# w = [0, 1, 0, 1, 0, 1]
+# val = evaluate(u, phi, w, V)
+# @show val
+
+# grad = gradient(evaluate, u, phi, w, V)[3]
+# @show grad

@@ -48,28 +48,13 @@ function playerN_trafficM(N, M)
     # V
     V = sum(u[i] for i in 1:N)
 
-    (; name=name, N=N, u=u, A=A, phi=vcat(phi_reciprocity, phi_all_people), V=V)
+    (; name=name, N=N, u=u, A=A, phi=phi_individual, V=V)
 end
 
-# create traffic example
-# name, N, u, A, phi, V = playerN_trafficM(3,2)
-# k = length(phi)
-
-# x, info = solve_entropy_nash_general(EntropySolver(), u)
-# @show x
-# @show info.total_iter
-
-# w = [0, 1, 0, 1, 0, 1]
-# val = evaluate(u, phi, w, V)
-# @show val
-
-# grad = gradient(evaluate, u, phi, w, V)[3]
-# @show grad
 name, N, u, A, phi, V = playerN_trafficM(3,2)
 gamma = 1.0
 @show gamma
 @show name
-# @time w, w_list, exp_val_list, terminate_step = GradientDescent(playerN_trafficM(9,2), 0.01, 1000, gamma)
 @time w, terminate_step = GradientDescent(playerN_trafficM(3,2), 0.01, 1000, gamma)
 
 # plot(exp_val_list, label="Entropy-Nash GD")
