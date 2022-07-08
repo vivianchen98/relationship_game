@@ -1,5 +1,12 @@
 
-max_pivots = 1000
+"""
+Implements Lemke-Howson pivoting method for bimatrix games.
+"""
+Base.@kwdef struct LemkeHowsonGameSolver
+    "The maximum number of pivots allowed."
+    max_pivots::Int = 1000
+end
+
 
 """
 Implements Lemke-Howson pivoting method for Bimatrix games.
@@ -18,7 +25,7 @@ Returns:
     - pivots: number of pivots performed to find solution
     - ray_term: true if method exited prematurely with a ray termination
 """
-function solve_mixed_nash(A, B; ϵ = 0.0)
+function solve_mixed_nash(solver::LemkeHowsonGameSolver, A, B; ϵ = 0.0)
 
     @assert size(A) == size(B)
 
@@ -70,7 +77,7 @@ function solve_mixed_nash(A, B; ϵ = 0.0)
             break
         end
         pivots += 1
-        if pivots >= max_pivots
+        if pivots >= solver.max_pivots
             max_iters = true
             break
         end
