@@ -19,11 +19,19 @@ julia order_and_design.jl
 #### Gradient Method
 * New game solver: Entropy-Regularized Nash Solver in
 ```
-game_solvers/entropy_nash_solver.jl
+game_solvers/entropy_nash_solver_general.jl
 ```
-* You can visualize the effect of entropy nash solver by enter julia, then do
+* Entropy-Nash Gradient Descent in
 ```
-julia> include("visualize_entropy_nash.jl")
+gradient_entropy_nash_general.jl
+```
+* test Entropy-Nash GD by
+```
+test_entropy_nash_general.jl
+```
+* visualize Entropy-Nash GD by
+```
+visualize_entropy_nash_general.jl
 ```
 
 ### Acknowledgments
