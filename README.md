@@ -7,6 +7,11 @@ To design weight vector on a relationship game (RG) so that is solution is socia
 ### Installing
 
 ### Running
+#### running example: generalized traffic
+* A N-player, M-action running example of traffic in 
+```
+trafficN.jl
+```
 
 #### Global Method: order-and-design
 * Given a RG, compute a sparse w using a LP, solved by Gurobi
