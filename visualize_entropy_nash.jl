@@ -88,7 +88,7 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
 end
 
 # General plotting
-function plotting(s, plot_type; c=10, axis_length)
+function plotting(s, plot_type; c=1, axis_length)
     if plot_type == "heatmap"
         println("Plotting heatmap for {$(s.name)}")
         plot_heatmap(s.u, s.phi, s.V, s.name, c, axis_length)

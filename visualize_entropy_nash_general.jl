@@ -41,13 +41,15 @@ function plot_surface(u, phi, V, output_name, axis_length)
 end
 
 # Gradient-Heatmap
-function plot_heatmap(u, phi, V, output_name, c, axis_length)
+function plot_heatmap(u, phi, V, output_name, c, axis_length, gamma)
     # axis_length = 10
     x = range(-axis_length, stop=axis_length, length=1000)  # w1
     y = range(-axis_length, stop=axis_length, length=1000)  # w2
 
     # plot heatmap
-    g(x, y) = expectedValue(u, phi, [x,y], V)
+    # g(x, y) = expectedValue(u, phi, [x,y], V)
+    g(x, y) = evaluate(u, phi, [x,y], V, gamma)
+
 
     xlim = (-axis_length, axis_length)
     ylim = (-axis_length, axis_length)
@@ -58,7 +60,7 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
 
     # plot gradient if needed
     if args["plot-gradient"] == true
-        f(x, y) = evaluate(u, phi, [x,y], V)
+        f(x, y) = evaluate(u, phi, [x,y], V, gamma)
 
         fdot(x, y) = gradient(f, x, y)
         ∂xf(x, y) = fdot(x, y)[1]
@@ -70,10 +72,10 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
         X, Y = reim(complex.(x', y)) # meshgrid
         S, T = c*∂xf.(x', y), c*∂yf.(x', y)
 
-        quiver!(vec(X-S/2), vec(Y-T/2); quiver=(vec(S), vec(T)), color=:cyan)
+        quiver!(vec(X-S/2), vec(Y-T/2); quiver=(vec(S), vec(T)), color=:blue)
     end
 
-    plot(h; xlim, ylim, xlabel = "w1", ylabel = "w2", title="c=$c", size=(450, 400))
+    plot(h; xlim, ylim, xlabel = "w1", xtickfont=10, ylabel = "w2", title="c=$c", size=(450, 400))
 
     output_path = ""
     if args["nash_type"] == "nash"
@@ -88,10 +90,10 @@ function plot_heatmap(u, phi, V, output_name, c, axis_length)
 end
 
 # General plotting
-function plotting(s, plot_type; c=10, axis_length)
+function plotting(s, plot_type; c=10, axis_length, gamma=1)
     if plot_type == "heatmap"
         println("Plotting heatmap for {$(s.name)}")
-        plot_heatmap(s.u, s.phi, s.V, s.name, c, axis_length)
+        plot_heatmap(s.u, s.phi, s.V, s.name, c, axis_length, gamma)
     elseif plot_type == "surface"
         println("Plotting surface for {$(s.name)}")
         plot_surface(s.u, s.phi, s.V, s.name, axis_length)

@@ -129,6 +129,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w)
 
         # ∂x/∂w = - J_F \ J_F_wrt_w
         ∂w = - (∂x_vec' * (J_F \ J_F_wrt_w))'
+        # ∂w = (∂x_vec' * (J_F \ J_F_wrt_w))'
 
         ∂self, ∂u, ∂phi, ∂w
     end
@@ -139,24 +140,24 @@ end
 
 # Gradient Descent of social cost V on weight vector w
 function GradientDescent(g, stepsize, max_iter, gamma=1)
-    w_list = Vector{Vector{Float64}}()
-    exp_val_list = Vector{Float64}()
+    # w_list = Vector{Vector{Float64}}()
+    # exp_val_list = Vector{Float64}()
     terminate_step = 0
 
     # init w
     K = length(g.phi)
-    w = [1/K for i in 1:K] # unifrom distribution of length K
-    push!(w_list, w)
-    push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
+    w = [0/K for i in 1:K] # unifrom distribution of length K
+    # push!(w_list, w)
+    # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
     println("start with w=($w)")
 
     for i in 1:max_iter
         ∂w = gradient(evaluate, g.u, g.phi, w, g.V, gamma)[3]
         w = w - stepsize .* ∂w
-        push!(w_list, w)
-        push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
-        if i % 1000 == 0
-            # @show w
+        # push!(w_list, w)
+        # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, gamma))
+        if i % 100 == 0
+            println("step $(i): $w")
             # @show norm(∂w)
             # @show evaluate(g.u, g.phi, w, g.V)
         end
@@ -172,5 +173,6 @@ function GradientDescent(g, stepsize, max_iter, gamma=1)
         end
     end
 
-    return w, w_list, exp_val_list, terminate_step
+    # return w, w_list, exp_val_list, terminate_step
+    return w, terminate_step
 end

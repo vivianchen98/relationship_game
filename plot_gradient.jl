@@ -1,4 +1,4 @@
-include("visualize_entropy_nash_general.jl")
+include("visualize_entropy_nash.jl")
 include("trafficN.jl")
 
 # ************* EXAMPLES *************
@@ -63,4 +63,4 @@ end
 
 # ************* PLOTTING *************
 #plotting(playerN_trafficM(3,2), "surface", c=0.5, axis_length=10)
-plotting(playerN_trafficM(3,3), "heatmap", c=0.5, axis_length=10)
+plotting(prisoner(), "heatmap", c=0.5, axis_length=1)

@@ -41,7 +41,6 @@ function order_and_design(N, A, u, V_matrix, phi, k)
 
         if found
             # compute resulting nash sol
-            # z_phi = sum(z[i]*phi[i] for i in eachindex(z)) 
             w_phi = sum(w[i]*phi[i] for i in eachindex(w)) 
             u_tilde = u + [sum(w_phi[n,:][i] * u[i] for i in 1:N) for n in 1:N]
             x_tilde = compute_equilibrium(u_tilde).x
@@ -104,8 +103,8 @@ function design(N, A, u, a, phi, k)
     @objective(model, Min, sum(z[i] for i in eachindex(z)))
 
     # print and solve
-    # print("\n------ MODEL -------\n")
-    # print(model)
+    print("\n------ MODEL -------\n")
+    print(model)
     total_num_constraints = num_constraints(model, AffExpr, MOI.GreaterThan{Float64}) + num_constraints(model, AffExpr, MOI.LessThan{Float64})
     
     optimize!(model)
@@ -121,8 +120,6 @@ function design(N, A, u, a, phi, k)
     else
         w, obj_val = zeros(length(phi)), 0
     end
-    # @show total_num_constraints
-    # @assert false
 
     (; found, w, z, obj_val, total_num_constraints)
 end

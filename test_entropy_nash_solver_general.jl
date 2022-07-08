@@ -48,7 +48,7 @@ function playerN_trafficM(N, M)
     # V
     V = sum(u[i] for i in 1:N)
 
-    (; name=name, N=N, u=u, A=A, phi=phi_individual, V=V)
+    (; name=name, N=N, u=u, A=A, phi=vcat(phi_reciprocity, phi_all_people), V=V)
 end
 
 # create traffic example
@@ -66,15 +66,16 @@ end
 # grad = gradient(evaluate, u, phi, w, V)[3]
 # @show grad
 name, N, u, A, phi, V = playerN_trafficM(3,2)
-gamma = 1
-@time w, w_list, exp_val_list, terminate_step = GradientDescent(playerN_trafficM(3,2), 0.01, 1000, gamma)
-# @show w
-# @show terminate_step
+gamma = 1.0
+@show gamma
+@show name
+# @time w, w_list, exp_val_list, terminate_step = GradientDescent(playerN_trafficM(9,2), 0.01, 1000, gamma)
+@time w, terminate_step = GradientDescent(playerN_trafficM(3,2), 0.01, 1000, gamma)
 
-plot(exp_val_list, label="Entropy-Nash GD")
-plot!(5 * ones(length(exp_val_list)), label="Optimal")
-plot!(10.3 * ones(length(exp_val_list)), label="Nash")
-savefig("exp_val_list.png")
+# plot(exp_val_list, label="Entropy-Nash GD")
+# plot!(5 * ones(length(exp_val_list)), label="Optimal")
+# plot!(10.3 * ones(length(exp_val_list)), label="Nash")
+# savefig("gradient_output/$(name)_E[V].png")
 
 # print("\n------ Modifed Game Sol -------\n")
 # w_phi = sum(w[i]*phi[i] for i in eachindex(w))
