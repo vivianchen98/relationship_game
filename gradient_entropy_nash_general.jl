@@ -53,6 +53,35 @@ function strategy_cost(x, V)
     return sum(cost)
 end
 
+function lazy_J_except_i(i, x, u)
+    num_actions = size(u[1])[1]
+    cost = zeros(num_actions)
+    for ai in 1:num_actions
+        x_alt = copy(x)
+        pure_strat_i = zeros(num_actions)
+        pure_strat_i[ai] = 1
+        x_alt[i] = pure_strat_i
+        full_list = [s for s in 1:length(x_alt)]
+        cost[ai] = sum(u[i] .* prob_prod(x_alt, full_list, CartesianIndices(u[i])))
+    end
+    return cost
+end
+
+function J(i, x, u)
+    full_list = [s for s in 1:length(x)]
+    cost = sum(u[i] .* prob_prod(x, full_list, CartesianIndices(u[i])))
+    return cost
+end
+
+function J_except_i(i, x, u)
+    N = length(x)
+    except_i_list = [s for s in 1:N if s != i]
+    cost = u[i] .* prob_prod([x[j] for j in 1:length(x) if j != i], except_i_list, CartesianIndices(u[i]))
+    return cost
+    # return sum(cost)
+end
+
+
 function ChainRulesCore.rrule(::typeof(strategy_cost), x, V)
     res = strategy_cost(x, V)
     function strategy_cost_pullback(∂res)

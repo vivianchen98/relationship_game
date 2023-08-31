@@ -163,6 +163,7 @@ function solve_entropy_nash_general(solver::EntropySolver, u; λ = args["lambda"
             # compute step = inv(J_F) * ([x;y] - [s;u])
             β = 0.1
             step = (J_F' * J_F + β * I(total_actions)) \ J_F' * (x_vec - s_vec)
+            @assert det(J_F) > 1e-5
 
             # step if not convergent yet
             if norm(step, 2) < ϵ
