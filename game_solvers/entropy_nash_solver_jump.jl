@@ -58,6 +58,10 @@ function solve_entropy_nash_general(u, λ)
     @variable(model, cost[1:N, 1:num_actions])
 
 
+    for idx in CartesianIndices(u[i])
+        out[idx] = prod(x[s, idx[s]] for s in 1:N)
+    end
+
     # ??? cost = J_except_i(x,u[i])
     for i in 1:N
         # @constraint(model, cost[i, :] == [sum(u[i] .* out[i, :, :, :]) for i in 1:N])
