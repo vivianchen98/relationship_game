@@ -73,13 +73,13 @@ function J(i, x, u)
     return cost
 end
 
-function J_except_i(i, x, u)
-    N = length(x)
-    except_i_list = [s for s in 1:N if s != i]
-    cost = u[i] .* prob_prod([x[j] for j in 1:length(x) if j != i], except_i_list, CartesianIndices(u[i]))
-    return cost
-    # return sum(cost)
-end
+# function J_except_i(i, x, u)
+#     N = length(x)
+#     except_i_list = [s for s in 1:N if s != i]
+#     cost = u[i] .* prob_prod([x[j] for j in 1:length(x) if j != i], except_i_list, CartesianIndices(u[i]))
+#     return cost
+#     # return sum(cost)
+# end
 
 
 function ChainRulesCore.rrule(::typeof(strategy_cost), x, V)
