@@ -25,7 +25,7 @@ Inputs:
 Returns:
 - x: mixed eq strategies for each player
 """
-function solve_entropy_nash_general(u, λ)
+function solve_entropy_nash_jump(u, λ)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
 
