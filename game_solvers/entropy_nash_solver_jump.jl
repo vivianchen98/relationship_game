@@ -1,47 +1,30 @@
 using JuMP, LinearAlgebra, Ipopt
 using Zygote, ChainRulesCore
 
+"""helper functions"""
+function prob_prod_jump(x, player_indices, cartesian_indices)
+    return [prod(x[i, idx[i]] for i in player_indices) for idx in cartesian_indices]
+end
+function J_except_i(i, x, u)
+    N = length(u)
+    full_list_except_i = collect(1:N)
+    deleteat!(full_list_except_i, i)
 
-function prob_prod(x, player_indices, cartesian_indices)
-    out = zeros(size(cartesian_indices))
-    for idx in cartesian_indices
-        out[idx] = prod(x[i][idx[i]] for i in player_indices)
-    end
-    return out
+    # Calculates costs across all action distributions except for player i, then sums across dims other than player i
+    costs = sum(u[i] .* prob_prod_jump(x, full_list_except_i, CartesianIndices(u[i])), dims=full_list_except_i)
+    return vcat(costs...) #We need to flatten the resulting 1D tensor into an array
 end
 
-function lazy_J_except_i(i, x, u)
-    num_actions = size(u[1])[1]
-    N = length(x)
-    cost = zeros(num_actions)
-    for ai in 1:num_actions
-        x_alt = copy(x)
-        pure_strat_i = zeros(num_actions)
-        pure_strat_i[ai] = 1
-        x_alt[i] = pure_strat_i
-        # full_list = [s for s in 1:length(x_alt)]
-        # cost[ai] = sum(u[i] .* prob_prod(x_alt, full_list, CartesianIndices(u[i])))
-        cost[ai] = sum(u[i] .* prob_prod(x_alt, collect(1:N), CartesianIndices(u[i])))
-    end
-    return cost
-end
 
-function lazy_J_except_i_jump(i, x, u, N, num_actions)
-    # num_actions = size(u[1])[1]
-    # N = length(x)
-    cost = zeros(num_actions)
-    for ai in 1:num_actions
-        x_alt = copy(x)
-        pure_strat_i = zeros(num_actions)
-        pure_strat_i[ai] = 1
-        x_alt[i] = pure_strat_i
-        # full_list = [s for s in 1:length(x_alt)]
-        # cost[ai] = sum(u[i] .* prob_prod(x_alt, full_list, CartesianIndices(u[i])))
-        cost[ai] = sum(u[i] .* prob_prod(x_alt, collect(1:N), CartesianIndices(u[i])))
-    end
-    return cost
-end
+"""
+Compute entropy-regularized Nash mixed strategies using JuMP and Ipopt
+Inputs:
+- u, utility tensor
+- λ, entropy weight
 
+Returns:
+- x: mixed eq strategies for each player
+"""
 function solve_entropy_nash_general(u, λ)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
@@ -52,34 +35,29 @@ function solve_entropy_nash_general(u, λ)
     # variables
     @variable(model, x[1:N, 1:num_actions] >= 0)
 
-
     # slack variable
     @variable(model, p[1:N, 1:num_actions])
     @variable(model, cost[1:N, 1:num_actions])
 
-
-    for idx in CartesianIndices(u[i])
-        out[idx] = prod(x[s, idx[s]] for s in 1:N)
-    end
-
-    # ??? cost = J_except_i(x,u[i])
+    # constraints
     for i in 1:N
-        # @constraint(model, cost[i, :] == [sum(u[i] .* out[i, :, :, :]) for i in 1:N])
+        # cost_i = -J(x^{-i}, u^i) ./ λ
+        @constraint(model, cost[i, :] .== J_except_i(i, x, u) ./ λ)
 
-        sum(prod(x[i, ]) .* u[i, j] for j in 1:num_actions)
+        # p_i = x_i - softmax(cost_i)
+        for j in 1:num_actions
+            @NLconstraint(model, p[i, j] == x[i, j] - exp(cost[i,j]) / sum(exp(cost[i,j]) for j in 1:num_actions))
+        end
 
-    end
-
-    # softmax(-cost/λ)
-    for i in 1:N, j in 1:num_actions
-        @NLconstraint(model, x[i, j] - (exp(-cost[i,j]/λ) / sum(exp(-cost[i,j]/λ) for j in 1:num_actions)) == p[i, j])
+        # prob simplex constraint
+        @constraint(model, sum(x[i,j] for j in 1:num_actions) == 1)
     end
 
     # objective
-    @objective(m, Min, sum(sum(p[i, :] .* p[i, :]) for i in 1:N))
+    @objective(model, Min, sum(sum(p[i, :] .* p[i, :]) for i in 1:N))
 
 
-    optimize!(m)
+    optimize!(model)
 
     (; x = value.(x))
 end
