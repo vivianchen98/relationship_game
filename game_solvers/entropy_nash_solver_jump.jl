@@ -5,6 +5,7 @@ using Zygote, ChainRulesCore
 function prob_prod_jump(x, player_indices, cartesian_indices)
     return [prod(x[i, idx[i]] for i in player_indices) for idx in cartesian_indices]
 end
+
 function J_except_i(i, x, u)
     N = length(u)
     full_list_except_i = collect(1:N)
@@ -14,7 +15,6 @@ function J_except_i(i, x, u)
     costs = sum(u[i] .* prob_prod_jump(x, full_list_except_i, CartesianIndices(u[i])), dims=full_list_except_i)
     return vcat(costs...) #We need to flatten the resulting 1D tensor into an array
 end
-
 
 """
 Compute entropy-regularized Nash mixed strategies using JuMP and Ipopt
