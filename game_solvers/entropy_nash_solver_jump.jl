@@ -59,5 +59,5 @@ function solve_entropy_nash_jump(u, λ)
 
     optimize!(model)
 
-    (; x = value.(x))
+    return value.(x)
 end

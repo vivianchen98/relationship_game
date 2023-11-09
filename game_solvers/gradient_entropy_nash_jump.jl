@@ -1,4 +1,5 @@
 using Zygote, ChainRulesCore
+using LinearAlgebra
 include("entropy_nash_solver_jump.jl")
 
 function create_u_tilde(u, phi, w)
@@ -8,24 +9,19 @@ function create_u_tilde(u, phi, w)
     return u_tilde
 end
 
-function prob_prod(x, player_indices, cartesian_indices)
-    out = zeros(size(cartesian_indices))
-    for idx in cartesian_indices
-        out[idx] = prod(x[i, idx[i]] for i in player_indices)
-    end
-    return out
+function prob_prod_jump(x, player_indices, cartesian_indices)
+    return [prod(x[i, idx[i]] for i in player_indices) for idx in cartesian_indices]
 end
 
 function strategy_cost(x, V)
-    full_list = collect(1:size(x)[1])
-    cost = V .* prob_prod(x, full_list, CartesianIndices(V))
+    cost = V .* prob_prod_jump(x, 1:size(x,1), CartesianIndices(V))
     return sum(cost)
 end
 
 function solve_relationship_game(u, phi, w, λ)
     u_tilde = create_u_tilde(u, phi, w)
-    x, = solve_entropy_nash_jump(u_tilde, λ)
-    (; x = x)
+    x = solve_entropy_nash_jump(u_tilde, λ)
+    return x
 end
 
 function evaluate(u, V, phi, w, λ)
@@ -33,8 +29,10 @@ function evaluate(u, V, phi, w, λ)
     return strategy_cost(x, V)
 end
 
-function extract_x(res)
-    return res.x
+# stable softmax
+function softmax(arr; θ=1)
+    e = exp.((arr .- maximum(arr)) * θ)
+    return e./ sum(e)
 end
 
 # jacobian matrix for a softmax distribution (given s = softmax(x))
@@ -47,8 +45,26 @@ function softmax_jacobian(s)
     return J_s
 end
 
+# Derivative of u_tilde (modified utilities) wrt w (tensor form)
+function u_tilde_i_grad_w(u, phi, i)
+    return cat([sum(phi_r[i,j] * u[j] for j in eachindex(u)) for phi_r in phi]..., dims=length(u) + 1)
+end
+
+# Jacobian of h^i wrt w
+function J_h_i_wrt_w(u, phi, x, i)
+    J_u_tilde = u_tilde_i_grad_w(u, phi, i)
+    out = h_except_i(i, x, J_u_tilde)
+    return reshape(out, (length(x[i, :]), length(phi)))
+end
+
+# Jacobian of softmax(-h^i(x,w)/λ) wrt w
+function J_s_i_wrt_w(u, phi, x, λ, i)
+    s_i = softmax(-h_except_i(i, x, u[i]) ./ λ)
+    return - softmax_jacobian(s_i) * J_h_i_wrt_w(u, phi, x, i) ./ λ
+end
+
 function g(i, j, u, x)
-    n = length(u)
+    n = size(x)[1]
     if n == 2
         if i < j
             return u[i]
@@ -57,58 +73,69 @@ function g(i, j, u, x)
         end
     end
     list_without_i_j = [s for s in 1:n]; deleteat!(list_without_i_j, sort([i,j]))
-    pt_cost = u[i] .* prob_prod(x, list_without_i_j, CartesianIndices(u[i]))
+    pt_cost = u[i] .* prob_prod_jump(x, list_without_i_j, CartesianIndices(u[i]))
     out = sum(pt_cost, dims=list_without_i_j)
     out = permutedims(out, (i,j,list_without_i_j...))
-    out = reshape(out, (length(x[i]), length(x[j])))
+    out = reshape(out, (length(x[i, :]), length(x[j, :])))
     return out
+end
+
+function h_except_i(i, x, u_i)
+    N = size(x, 1)
+    full_list_except_i = [s for s in 1:N if s != i]
+
+    # Calculates costs across all action distributions except for player i, then sums across dims other than player i
+    costs = sum(u_i .* prob_prod_jump(x, full_list_except_i, CartesianIndices(u_i)), dims=full_list_except_i)
+    return vcat(costs...) #We need to flatten the resulting 1D tensor into an array
+end
+
+function J_except_i(i, x, u)
+    return h_except_i(i, x, u[i])
 end
 
 # TO DO: pullback of strategy_cost, solve_entropy_nash_jump, create_u_tilde
 # => or make sure strategy_cost and create_u_tilde are compatible with Zygote auto-diff
 # then do gradient(evaluate, u, V, phi, w, λ)[4] as ∂w
 
-
 function ChainRulesCore.rrule(::typeof(strategy_cost), x, V)
-    res = strategy_cost(x, V)
-    function strategy_cost_pullback(∂res)
-        N = size(x)[1]
-
+    J = strategy_cost(x, V)
+    function strategy_cost_pullback(∂J)
+        # placeholder for unused partial derivatives ∂V
         ∂self = NoTangent()
         ∂V = NoTangent()
 
-        V_repeat = [V for i in 1:N]
-        ∂x = vcat([J_except_i(i, x, V_repeat)' * ∂res for i in 1:N]...)
+        # ∂x := the partial derivative operator wrt x (∂/∂x)
+        # ∂J := the partial derivative operator wrt J (∂/∂J)
+        # ∂x = ∂J/∂x * ∂/∂J = [gradient to find] * ∂J
+        N = size(x)[1]
+        ∂x = vcat([h_except_i(i, x, V)' * ∂J for i in 1:N]...)
 
         ∂self, ∂x, ∂V
     end
-    res, strategy_cost_pullback
+    J, strategy_cost_pullback
 end
 
 function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
     res = solve_relationship_game(u, phi, w, λ)
 
     function solve_relationship_game_pullback(∂res)
-        x = res.x
-        x_vec = collect(Iterators.flatten(x))
-        ∂x_vec = collect(Iterators.flatten(∂res.x))
-        # proper_termination, total_iter, max_iter, λ, N = res.info
-        # K = size(phi)[3]
+        # flatten x as a vector z
+        ∂z = collect(Iterators.flatten(∂res))
 
-        # s = [softmax(- h(i, u, x) ./ λ) for i in 1:N]
-        # s_vec = collect(Iterators.flatten(s))
-
+        # placeholder for unused partial derivatives ∂u, ∂phi
         ∂self = NoTangent()
         ∂u = NoTangent()
         ∂phi = NoTangent()
+        ∂λ = NoTangent()
 
-        # J_F
+        # J_F_wrt_z = ∂z/∂z - ∂s/∂z
         N = length(u)
-        J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(x[j]) * (-g(i,j,u,x) ./ λ)) #(softmax_jacobian(x[j]) * (-g(i,j,u,x) ./ λ))
+        # N = size(res, 1)
+        J_submatrix(i,j) = (i == j) ? (zeros((size(u[i])[i], size(u[i])[i]))) : (softmax_jacobian(x[j,:]) * (-g(i,j,u,x) ./ λ)) #(softmax_jacobian(x[j]) * (-g(i,j,u,x) ./ λ))
         J_softmax = []
         for i in 1:N
             row = []
-            for j in 1:length(x)
+            for j in 1:size(x)[1]
                 if isempty(row)
                     row = J_submatrix(i,j)
                 else
@@ -123,30 +150,20 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
         end
         # CHECK FOR CORRECT SIZE
         m, n = size(J_softmax)
-        total_actions = sum(size(u[i])[i] for i in 1:N)
-        @assert m == total_actions && n == total_actions
+        total_player_times_action = sum(size(u[i])[i] for i in 1:N)
+        @assert m == total_player_times_action && n == total_player_times_action
 
-        J_F = I(total_actions) - J_softmax
-        #@show size(J_F)
+        # J_F_wrt_z = I .- J_softmax
+        J_F_wrt_z = I - J_softmax
 
-        # J_F_wrt_w
+        # J_F_wrt_w = - ∂s/∂w
         J_F_wrt_w = - vcat([J_s_i_wrt_w(u, phi, x, λ, i) for i in 1:N]...)
-        # @show size(J_F_wrt_w)
-        # @show size(∂x_vec)
 
-        #u_tilde = create_u_tilde(u, phi, w)
-        #J_h_i_wrt_w = h(i, sum(phi[r,i,j] * u_tilde[j] for j in 1:N), x)
-        #J_F_wrt_w = softmax_jacobian(s) ./ λ) ./ λ * J_h_i_wrt_w #softmax_jacobian(-h(i,create_u_tilde(u, phi, w), x) ./ λ) ./ λ * J_h_i_wrt_w
+        # ∂z/∂w = - J_F_wrt_z \ J_F_wrt_w
+        ∂w = - (∂z' * (J_F_wrt_z\ J_F_wrt_w))'
 
-        # ∂x/∂w = - J_F \ J_F_wrt_w
-        ∂w = - (∂x_vec' * (J_F \ J_F_wrt_w))'
-        # ∂w = (∂x_vec' * (J_F \ J_F_wrt_w))'
-
-        ∂self, ∂u, ∂phi, ∂w
+        ∂self, ∂u, ∂phi, ∂w, ∂λ
     end
 
     res, solve_relationship_game_pullback
 end
-
-
-# gradient(evaluate, u, V, phi, w, λ)[4]
