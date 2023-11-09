@@ -192,7 +192,7 @@ function GradientDescent(g, stepsize, max_iter, λ)
             @show evaluate(g.u, g.V, g.phi, w, λ)
             println()
         end
-        if norm(∂w) < 0.1 # stopping criteria
+        if norm(∂w) < 0.0001 # stopping criteria
         # if evaluate(g.u, g.phi, w, g.V) - (-1) ≤ 0.01
             println("terminate with w=($w) in $(i) steps")
             terminate_step = i
