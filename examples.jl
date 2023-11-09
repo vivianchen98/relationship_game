@@ -32,7 +32,7 @@ function congestion()
     
     # phi = [[0 1 1; 1 0 1; 1 1 0]]
 
-    (; u = u, V = V, phi = phi)
+    (; u = u, V = V, phi = phi, λ = 0.1)
 end
 
 function bee_queen()

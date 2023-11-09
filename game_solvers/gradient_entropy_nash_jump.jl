@@ -135,7 +135,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
         J_softmax = []
         for i in 1:N
             row = []
-            for j in 1:size(x)[1]
+            for j in 1:N
                 if isempty(row)
                     row = J_submatrix(i,j)
                 else
@@ -166,4 +166,44 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
     end
 
     res, solve_relationship_game_pullback
+end
+
+# Gradient Descent of social cost V on weight vector w
+function GradientDescent(g, stepsize, max_iter, λ)
+    # w_list = Vector{Vector{Float64}}()
+    # exp_val_list = Vector{Float64}()
+    terminate_step = 0
+
+    # init w
+    K = length(g.phi)
+    w = [0/K for i in 1:K] # unifrom distribution of length K
+    # push!(w_list, w)
+    # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, g.λ))
+    println("start with w=($w)")
+
+    for i in 1:max_iter
+        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ)[4]
+        w = w - stepsize .* ∂w
+        # push!(w_list, w)
+        # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, g.λ))
+        if i % 100 == 0
+            println("step $(i): $w")
+            # @show norm(∂w)
+            @show evaluate(g.u, g.V, g.phi, w, λ)
+            println()
+        end
+        if norm(∂w) < 0.1 # stopping criteria
+        # if evaluate(g.u, g.phi, w, g.V) - (-1) ≤ 0.01
+            println("terminate with w=($w) in $(i) steps")
+            terminate_step = i
+            # @show evaluate(g.u, g.phi, w, g.V)
+            break
+        end
+        if i == max_iter
+            println("Does not converge within ($max_iter) iterations")
+        end
+    end
+
+    # return w, w_list, exp_val_list, terminate_step
+    return w, terminate_step
 end
