@@ -1,5 +1,4 @@
 using JuMP, LinearAlgebra, Ipopt
-using Zygote, ChainRulesCore
 
 """helper functions"""
 function prob_prod_jump(x, player_indices, cartesian_indices)
@@ -7,12 +6,14 @@ function prob_prod_jump(x, player_indices, cartesian_indices)
 end
 
 function J_except_i(i, x, u)
-    N = length(u)
-    full_list_except_i = collect(1:N)
-    deleteat!(full_list_except_i, i)
+    full_list_except_i = [j for j in 1:length(u) if j != i]
 
     # Calculates costs across all action distributions except for player i, then sums across dims other than player i
     costs = sum(u[i] .* prob_prod_jump(x, full_list_except_i, CartesianIndices(u[i])), dims=full_list_except_i)
+
+
+    sum([u[i][idx] * prod(x_real[k, idx[k]] for k in full_list_except_i) for idx in cartesian_indices], dims=full_list_except_i)
+
     return vcat(costs...) #We need to flatten the resulting 1D tensor into an array
 end
 
@@ -38,11 +39,21 @@ function solve_entropy_nash_jump(u, λ)
     # slack variable
     @variable(model, p[1:N, 1:num_actions])
     @variable(model, cost[1:N, 1:num_actions])
+    @variable(model, J[1:N, 1:num_actions])
 
     # constraints
     for i in 1:N
+        # J(x^{-i}, u^i)
+        full_list_except_i = [j for j in 1:N if j != i]
+        cartesian_indices = CartesianIndices(u[i])
+        for j in 1:num_actions
+            cartesian_indices_j = selectdim(cartesian_indices, i, j)
+            # @NLconstraint(model, J[i, j] == sum(u[i][idx] * prod(x[k, idx[k]] for k in full_list_except_i) for idx in cartesian_indices_j))
+            @NLconstraint(model, cost[i, j] == - sum(u[i][idx] * prod(x[k, idx[k]] for k in full_list_except_i) for idx in cartesian_indices_j) / λ)
+        end
+
         # cost_i = -J(x^{-i}, u^i) ./ λ
-        @constraint(model, cost[i, :] .== J_except_i(i, x, u) ./ λ)
+        # @constraint(model, cost[i, :] .== J[i, :] ./ λ)
 
         # p_i = x_i - softmax(cost_i)
         for j in 1:num_actions
@@ -56,8 +67,8 @@ function solve_entropy_nash_jump(u, λ)
     # objective
     @objective(model, Min, sum(sum(p[i, :] .* p[i, :]) for i in 1:N))
 
-
     optimize!(model)
 
+    # print("status: ", termination_status(model), "\n")
     return value.(x)
 end

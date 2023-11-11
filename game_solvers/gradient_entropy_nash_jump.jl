@@ -1,5 +1,4 @@
 using Zygote, ChainRulesCore
-using LinearAlgebra
 include("entropy_nash_solver_jump.jl")
 
 function create_u_tilde(u, phi, w)
@@ -119,6 +118,8 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
     res = solve_relationship_game(u, phi, w, λ)
 
     function solve_relationship_game_pullback(∂res)
+        x = res
+
         # flatten x as a vector z
         ∂z = collect(Iterators.flatten(∂res))
 
@@ -176,7 +177,7 @@ function GradientDescent(g, stepsize, max_iter, λ)
 
     # init w
     K = length(g.phi)
-    w = [0/K for i in 1:K] # unifrom distribution of length K
+    w = [1/K for i in 1:K] # unifrom distribution of length K
     # push!(w_list, w)
     # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, g.λ))
     println("start with w=($w)")
@@ -205,5 +206,5 @@ function GradientDescent(g, stepsize, max_iter, λ)
     end
 
     # return w, w_list, exp_val_list, terminate_step
-    return w, terminate_step
+    (;  w = w, J = evaluate(g.u, g.V, g.phi, w, λ), terminate_step = terminate_step)
 end
