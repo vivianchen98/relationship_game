@@ -22,8 +22,8 @@ function congestion()
     V = sum(u[i] for i in 1:N)
 
     # relationship structure imposed by reality
-    phi = [[1 0 0; 0 1 0; 0 0 1],
-           [0 1 1; 1 0 1; 1 1 0]]
+    phi = [ [1 0 0; 0 1 0; 0 0 1],  # each car's selfish utilities
+            [0 1 1; 1 0 1; 1 1 0]]  # regular car to regular car
     
     (; u = u, V = V, phi = phi, λ = 0.7)
 end
@@ -74,9 +74,10 @@ function bee_queen()
     V = sum(w[i] * u[i] for i in 1:N)
 
     # relationship structure imposed by reality
-    phi = [[0 0 0 0; 0 0 1 1; 0 1 0 1; 0 1 1 0],    # regular car to regular car
-           [0 0 0 0; 1 0 0 0; 1 0 0 0; 1 0 0 0],    # regular car to ambulance
-           [0 1 1 1; 0 0 0 0; 0 0 0 0; 0 0 0 0]     # ambulance to regular car
+    phi = [ [1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1],   # selifsh utility: identity matrix
+            [0 0 0 0; 0 0 1 1; 0 1 0 1; 0 1 1 0],   # regular car to regular car
+            [0 0 0 0; 1 0 0 0; 1 0 0 0; 1 0 0 0],   # regular car to ambulance
+            [0 1 1 1; 0 0 0 0; 0 0 0 0; 0 0 0 0]    # ambulance to regular car
           ]
 
     (; u = u, V = V, phi = phi)

@@ -36,7 +36,7 @@ function convexity_test(w, J, perturbation=0.1, total_test=100)
 end
 
 # given
-# u, V, phi, λ = congestion() # in `examples.jl`
+# u, V, phi = congestion() # in `examples.jl`
 
 # # step-wise test
 # u_tilde = create_u_tilde(u, phi, w)
@@ -49,13 +49,13 @@ end
 # # gradient computation
 # gradient(evaluate, u, V, phi, w, λ)[4]
 
-# gradient descent for congestion()
-# λ = 0.7
-# w, J, terminate_step = GradientDescent(congestion(), 0.05, 5000, λ)
+""" gradient descent for congestion() """
+# GradientDescent(game, step_size, max_iter, λ: entropy weight, β: tolerance)
+# w, J, terminate_step = GradientDescent(congestion(), 0.05, 5000, 0.7, 1e-4)
 
-# gradient descent for bee_queen()
-λ = 0.8
-w, J, terminate_step = GradientDescent(bee_queen(), 0.01, 5000, λ)
+"""gradient descent for bee_queen() """
+# w, J, (terminate_step) = GradientDescent(bee_queen(), 0.15, 10000, 0.8, 4e-4)
+w, J, (terminate_step) = GradientDescent(bee_queen(), 0.2, 10000, 0.8, 2e-4)
 
 # perturbation_test(w, J, 0.1, 100) # expected violation rate: 0.0
 # convexity_test(w, J, 0.1, 100)

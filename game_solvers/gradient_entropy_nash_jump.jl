@@ -4,7 +4,8 @@ include("entropy_nash_solver_jump.jl")
 function create_u_tilde(u, phi, w)
     N = length(u)
     w_phi = w' * phi
-    u_tilde = u + [sum(w_phi[n,i] * u[i] for i in 1:N) for n in 1:N]
+    # u_tilde = u + [sum(w_phi[n,i] * u[i] for i in 1:N) for n in 1:N]
+    u_tilde = [sum(w_phi[n,i] * u[i] for i in 1:N) for n in 1:N]
     return u_tilde
 end
 
@@ -170,7 +171,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
 end
 
 # Gradient Descent of social cost V on weight vector w
-function GradientDescent(g, stepsize, max_iter, λ)
+function GradientDescent(g, stepsize, max_iter, λ, β)
     # w_list = Vector{Vector{Float64}}()
     # exp_val_list = Vector{Float64}()
     terminate_step = 0
@@ -193,7 +194,7 @@ function GradientDescent(g, stepsize, max_iter, λ)
             @show evaluate(g.u, g.V, g.phi, w, λ)
             println()
         end
-        if norm(∂w) < 0.0001 # stopping criteria
+        if norm(∂w) < β # stopping criteria
         # if evaluate(g.u, g.phi, w, g.V) - (-1) ≤ 0.01
             println("terminate with w=($w) in $(i) steps")
             terminate_step = i
@@ -201,10 +202,11 @@ function GradientDescent(g, stepsize, max_iter, λ)
             break
         end
         if i == max_iter
-            println("Does not converge within ($max_iter) iterations")
+            println("Does not converge within ($max_iter) iterations: norm(∂w)=($(norm(∂w)))")
         end
     end
 
     # return w, w_list, exp_val_list, terminate_step
-    (;  w = w, J = evaluate(g.u, g.V, g.phi, w, λ), terminate_step = terminate_step)
+    (;  w = w, J = evaluate(g.u, g.V, g.phi, w, λ), 
+        info = (terminate_step = terminate_step))
 end
