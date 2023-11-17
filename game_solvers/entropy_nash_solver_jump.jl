@@ -35,6 +35,9 @@ function solve_entropy_nash_jump(u, λ)
 
     # variables
     @variable(model, x[1:N, 1:num_actions] >= 0)
+    # for i in 1:N, j in 1:num_actions
+    #     set_start_value(x[i,j], 1/num_actions)
+    # end
 
     # slack variable
     @variable(model, p[1:N, 1:num_actions])
@@ -43,17 +46,13 @@ function solve_entropy_nash_jump(u, λ)
 
     # constraints
     for i in 1:N
-        # J(x^{-i}, u^i)
+        # cost_i = -J(x^{-i}, u^i) ./ λ
         full_list_except_i = [j for j in 1:N if j != i]
         cartesian_indices = CartesianIndices(u[i])
         for j in 1:num_actions
             cartesian_indices_j = selectdim(cartesian_indices, i, j)
-            # @NLconstraint(model, J[i, j] == sum(u[i][idx] * prod(x[k, idx[k]] for k in full_list_except_i) for idx in cartesian_indices_j))
             @NLconstraint(model, cost[i, j] == - sum(u[i][idx] * prod(x[k, idx[k]] for k in full_list_except_i) for idx in cartesian_indices_j) / λ)
         end
-
-        # cost_i = -J(x^{-i}, u^i) ./ λ
-        # @constraint(model, cost[i, :] .== J[i, :] ./ λ)
 
         # p_i = x_i - softmax(cost_i)
         for j in 1:num_actions
@@ -69,6 +68,6 @@ function solve_entropy_nash_jump(u, λ)
 
     optimize!(model)
 
-    # print("status: ", termination_status(model), "\n")
+    print("status: ", termination_status(model), "\n")
     return value.(x)
 end

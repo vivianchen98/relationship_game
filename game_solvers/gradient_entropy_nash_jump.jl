@@ -170,35 +170,70 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
     res, solve_relationship_game_pullback
 end
 
+# function project(w)
+#     # project onto the probability simplex
+#     K = length(w)
+#     w_abs = abs.(w)
+#     w_abs = w_abs - (1/K) * ones(K)
+#     w_abs = max.(w_abs, 0)
+#     w = w / sum(w_abs)
+#     return w
+# end
+
+# using HiGHS
+# function l1_orthogonal_project(w)
+#     model = Model(HiGHS.Optimizer)
+#     set_silent(model)
+
+#     @variable(model, y[1:length(w)] >= 0)
+
+#     @constraint(model, sum(abs(y[i]) for i in 1:length(w)) ≤ 1)
+
+#     @objective(model, Min, sum((y - w).^2))
+
+# end
+
+function l2_project(w)
+    return w / norm(w)
+end
+
 # Gradient Descent of social cost V on weight vector w
 function GradientDescent(g, stepsize, max_iter, λ, β)
-    # w_list = Vector{Vector{Float64}}()
-    # exp_val_list = Vector{Float64}()
+    w_list = Vector{Vector{Float64}}()
+    J_list = Vector{Float64}()
     terminate_step = 0
 
     # init w
     K = length(g.phi)
-    w = [1/K for i in 1:K] # unifrom distribution of length K
-    # push!(w_list, w)
-    # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, g.λ))
+    w = randn(K)
+    w = w / norm(w)
+    #w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
+    #w = zeros(K); w[1] = 1 # only one relationship
+
+    push!(w_list, w)
+    push!(J_list, evaluate(g.u, g.V, g.phi, w, λ))
     println("start with w=($w)")
 
     for i in 1:max_iter
         ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ)[4]
         w = w - stepsize .* ∂w
-        # push!(w_list, w)
-        # push!(exp_val_list, evaluate(g.u, g.phi, w, g.V, g.λ))
+
+        # project onto the probability simplex
+        w = l2_project(w)
+
+        push!(w_list, w)
+        current_J = evaluate(g.u, g.V, g.phi, w, λ)
+        push!(J_list, current_J)
         if i % 100 == 0
             println("step $(i): $w")
-            # @show norm(∂w)
-            @show evaluate(g.u, g.V, g.phi, w, λ)
+            @show current_J
             println()
         end
-        if norm(∂w) < β # stopping criteria
+        if norm(∂w - (∂w' * w) / (norm(w)^2) * w)  < β # stopping criteria
+        #if norm(∂w) < β # stopping criteria
         # if evaluate(g.u, g.phi, w, g.V) - (-1) ≤ 0.01
-            println("terminate with w=($w) in $(i) steps")
+            println("terminate with w=($w) in $(i) steps, with J=$(current_J)")
             terminate_step = i
-            # @show evaluate(g.u, g.phi, w, g.V)
             break
         end
         if i == max_iter
@@ -206,7 +241,6 @@ function GradientDescent(g, stepsize, max_iter, λ, β)
         end
     end
 
-    # return w, w_list, exp_val_list, terminate_step
     (;  w = w, J = evaluate(g.u, g.V, g.phi, w, λ), 
-        info = (terminate_step = terminate_step))
+        info = (terminate_step = terminate_step, J_list = J_list, w_list = w_list))
 end
