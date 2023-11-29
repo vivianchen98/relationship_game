@@ -3,7 +3,7 @@ include("game_solvers/gradient_entropy_nash_jump.jl")
 using Plots
 
 # given
-# u, V, phi = congestion() # in `examples.jl`
+# name, u, V, phi = congestion() # in `examples.jl`
 
 # # step-wise test
 # u_tilde = create_u_tilde(u, phi, w)

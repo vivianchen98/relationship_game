@@ -1,4 +1,5 @@
 using JuMP, LinearAlgebra, Ipopt
+using Distributions, Random
 
 """helper functions"""
 function prob_prod_jump(x, player_indices, cartesian_indices)
@@ -26,7 +27,7 @@ Inputs:
 Returns:
 - x: mixed eq strategies for each player
 """
-function solve_entropy_nash_jump(u, λ)
+function solve_entropy_nash_jump(u, λ; seed=-1)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
 
@@ -35,9 +36,15 @@ function solve_entropy_nash_jump(u, λ)
 
     # variables
     @variable(model, x[1:N, 1:num_actions] >= 0)
-    # for i in 1:N, j in 1:num_actions
-    #     set_start_value(x[i,j], 1/num_actions)
-    # end
+    if seed !== -1
+        Random.seed!(seed)
+        for i in 1:N
+            x_init = rand(Dirichlet(num_actions, 1.0))
+            for j in 1:num_actions
+                set_start_value(x[i,j], x_init[j])
+            end
+        end
+    end
 
     # slack variable
     @variable(model, p[1:N, 1:num_actions])
@@ -68,6 +75,6 @@ function solve_entropy_nash_jump(u, λ)
 
     optimize!(model)
 
-    print("status: ", termination_status(model), "\n")
+    # print("status: ", termination_status(model), "\n")
     return value.(x)
 end

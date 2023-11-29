@@ -18,14 +18,14 @@ function strategy_cost(x, V)
     return sum(cost)
 end
 
-function solve_relationship_game(u, phi, w, λ)
+function solve_relationship_game(u, phi, w, λ, seed)
     u_tilde = create_u_tilde(u, phi, w)
-    x = solve_entropy_nash_jump(u_tilde, λ)
+    x = solve_entropy_nash_jump(u_tilde, λ; seed=seed)
     return x
 end
 
-function evaluate(u, V, phi, w, λ)
-    x = solve_relationship_game(u, phi, w, λ)
+function evaluate(u, V, phi, w, λ, seed)
+    x = solve_relationship_game(u, phi, w, λ, seed)
     return strategy_cost(x, V)
 end
 
@@ -115,8 +115,8 @@ function ChainRulesCore.rrule(::typeof(strategy_cost), x, V)
     J, strategy_cost_pullback
 end
 
-function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
-    res = solve_relationship_game(u, phi, w, λ)
+function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ, seed)
+    res = solve_relationship_game(u, phi, w, λ, seed)
 
     function solve_relationship_game_pullback(∂res)
         x = res
@@ -129,6 +129,7 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
         ∂u = NoTangent()
         ∂phi = NoTangent()
         ∂λ = NoTangent()
+        ∂seed = NoTangent()
 
         # J_F_wrt_z = ∂z/∂z - ∂s/∂z
         N = length(u)
@@ -164,70 +165,69 @@ function ChainRulesCore.rrule(::typeof(solve_relationship_game), u, phi, w, λ)
         # ∂z/∂w = - J_F_wrt_z \ J_F_wrt_w
         ∂w = - (∂z' * (J_F_wrt_z\ J_F_wrt_w))'
 
-        ∂self, ∂u, ∂phi, ∂w, ∂λ
+        ∂self, ∂u, ∂phi, ∂w, ∂λ, ∂seed
     end
 
     res, solve_relationship_game_pullback
 end
 
-# function project(w)
-#     # project onto the probability simplex
-#     K = length(w)
-#     w_abs = abs.(w)
-#     w_abs = w_abs - (1/K) * ones(K)
-#     w_abs = max.(w_abs, 0)
-#     w = w / sum(w_abs)
-#     return w
-# end
-
-# using HiGHS
-# function l1_orthogonal_project(w)
-#     model = Model(HiGHS.Optimizer)
-#     set_silent(model)
-
-#     @variable(model, y[1:length(w)] >= 0)
-
-#     @constraint(model, sum(abs(y[i]) for i in 1:length(w)) ≤ 1)
-
-#     @objective(model, Min, sum((y - w).^2))
-
-# end
-
 function l2_project(w)
     return w / norm(w)
 end
 
-# Gradient Descent of social cost V on weight vector w
-function GradientDescent(g, stepsize, max_iter, λ, β)
+# projected GD
+function GradientDescent(g, α, max_iter, λ, β)
     w_list = Vector{Vector{Float64}}()
     J_list = Vector{Float64}()
     terminate_step = 0
 
+    # init stepsize
+    stepsize = α
+
+    # init seed
+    seed = 0
+
     # init w
     K = length(g.phi)
-    # w = randn(K)
-    # w = w / norm(w)
-    w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
-
+    # w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
+    w = rand(K) # random distribution of length K
     push!(w_list, w)
-    push!(J_list, evaluate(g.u, g.V, g.phi, w, λ))
     println("start with w=($w)")
 
-    for i in 1:max_iter
-        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ)[4]
-        w = l2_project(w - stepsize .* ∂w)  # project onto the probability simplex
+    previous_J = evaluate(g.u, g.V, g.phi, w, λ, -1)
+    push!(J_list, previous_J)
 
-        push!(w_list, w)
-        current_J = evaluate(g.u, g.V, g.phi, w, λ)
-        push!(J_list, current_J)
+    for i in 1:max_iter
+        # print result in intervals of 100
         if i % 100 == 0
             println("step $(i): $w")
-            @show current_J
+            @show previous_J
             println()
         end
+
+        # # set seed to be the iteration number
+        # seed = i
+
+        # compute candidate next w
+        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ, seed)[4]
+        w_candidate = l2_project(w - stepsize .* ∂w)   # project onto the probability simplex
+
+        # update current_J and test if J is decreasing
+        current_J = evaluate(g.u, g.V, g.phi, w_candidate, λ, seed)
+        # @show current_J
+        if current_J > previous_J
+            seed = i + 1    # update seed
+            continue
+        else
+            println("update w!")
+            w = w_candidate
+            push!(w_list, w)
+            push!(J_list, current_J)
+            previous_J = current_J
+        end
+
+        # stopping criteria
         if norm(∂w - (∂w' * w) / (norm(w)^2) * w)  < β # stopping criteria
-        #if norm(∂w) < β # stopping criteria
-        # if evaluate(g.u, g.phi, w, g.V) - (-1) ≤ 0.01
             println("terminate with w=($w) in $(i) steps, with J=$(current_J)")
             terminate_step = i
             break
@@ -237,6 +237,6 @@ function GradientDescent(g, stepsize, max_iter, λ, β)
         end
     end
 
-    (;  w = w, J = evaluate(g.u, g.V, g.phi, w, λ), 
+    (;  w = w, J = previous_J, 
         info = (terminate_step = terminate_step, J_list = J_list, w_list = w_list))
 end
