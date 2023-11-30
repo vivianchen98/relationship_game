@@ -176,7 +176,7 @@ function l2_project(w)
 end
 
 # projected GD
-function GradientDescent(g, α, max_iter, λ, β)
+function ProjectedGradientDownstairs(g, α, max_iter, λ, β)
     w_list = Vector{Vector{Float64}}()
     J_list = Vector{Float64}()
     terminate_step = 0
@@ -189,8 +189,8 @@ function GradientDescent(g, α, max_iter, λ, β)
 
     # init w
     K = length(g.phi)
-    # w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
-    w = rand(K) # random distribution of length K
+    w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
+    # w = rand(K) # random distribution of length K
     push!(w_list, w)
     println("start with w=($w)")
 
@@ -198,6 +198,19 @@ function GradientDescent(g, α, max_iter, λ, β)
     push!(J_list, previous_J)
 
     for i in 1:max_iter
+        # compute gradient
+        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ, seed)[4]
+
+        # stopping criteria
+        if norm(∂w - (∂w' * w) / (norm(w)^2) * w)  < β # stopping criteria
+            println("terminate with w=($w) in $(i) steps")
+            terminate_step = i
+            break
+        end
+        if i == max_iter
+            println("Does not converge within ($max_iter) iterations: norm(∂w)=($(norm(∂w)))")
+            break
+        end
         # print result in intervals of 100
         if i % 100 == 0
             println("step $(i): $w")
@@ -205,11 +218,7 @@ function GradientDescent(g, α, max_iter, λ, β)
             println()
         end
 
-        # # set seed to be the iteration number
-        # seed = i
-
         # compute candidate next w
-        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ, seed)[4]
         w_candidate = l2_project(w - stepsize .* ∂w)   # project onto the probability simplex
 
         # update current_J and test if J is decreasing
@@ -226,17 +235,13 @@ function GradientDescent(g, α, max_iter, λ, β)
             previous_J = current_J
         end
 
-        # stopping criteria
-        if norm(∂w - (∂w' * w) / (norm(w)^2) * w)  < β # stopping criteria
-            println("terminate with w=($w) in $(i) steps, with J=$(current_J)")
-            terminate_step = i
-            break
-        end
-        if i == max_iter
-            println("Does not converge within ($max_iter) iterations: norm(∂w)=($(norm(∂w)))")
-        end
+
     end
 
     (;  w = w, J = previous_J, 
         info = (terminate_step = terminate_step, J_list = J_list, w_list = w_list))
+end
+
+function ProjectedGradientMinMax(g, α, max_iter, λ, β)
+   # ToDo: implement
 end

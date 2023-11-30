@@ -70,7 +70,7 @@ function bee_queen()
     end
 
     # social cost as the weighted sum of utilities
-    w = [2, 1, 1, 1]
+    w = [8, 1, 1, 1]
     V = sum(w[i] * u[i] for i in 1:N)
 
     # relationship structure imposed by reality
