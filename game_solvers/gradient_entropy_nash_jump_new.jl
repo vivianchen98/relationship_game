@@ -242,6 +242,67 @@ function ProjectedGradientDownstairs(g, α, max_iter, λ, β)
         info = (terminate_step = terminate_step, J_list = J_list, w_list = w_list))
 end
 
-function ProjectedGradientMinMax(g, α, max_iter, λ, β)
-   # ToDo: implement
+function ProjectedGradientMinMax(g, α, max_iter, λ, β; num_rerolls=50)
+    w_list = Vector{Vector{Float64}}()
+    J_list = Vector{Float64}()
+    terminate_step = 0
+
+    # init stepsize
+    stepsize = α
+
+    # init seed
+    seed = 0
+
+    # init w
+    K = length(g.phi)
+    w = [1/sqrt(K) for i in 1:K] # unifrom distribution of length K
+    # w = rand(K) # random distribution of length K
+    push!(w_list, w)
+    println("start with w=($w)")
+
+    current_J = Inf
+    for i in 1:max_iter
+        ## Find a 'good' seed that provides maximal nash value 
+        temp_J = -Inf
+        test_seed = 0
+        for _ in 1:num_rerolls
+            test_seed = test_seed + 1     # 'reroll' seed
+            J_candidate = evaluate(g.u, g.V, g.phi, w, λ, test_seed)       # calculate value of J using seed
+
+            if J_candidate > temp_J
+                seed = test_seed    # update seed
+                temp_J = J_candidate
+            end
+        end
+
+        # compute gradient on the top branch using found seed.
+        ∂w = gradient(evaluate, g.u, g.V, g.phi, w, λ, seed)[4]
+
+        # update w
+        w = l2_project(w - stepsize .* ∂w)       
+        current_J = temp_J
+                
+        push!(w_list, w)
+        push!(J_list, current_J)
+
+
+        # stopping criteria
+        if norm(∂w - (∂w' * w) / (norm(w)^2) * w)  < β # stopping criteria
+            println("terminate with w=($w) in $(i) steps")
+            terminate_step = i
+            break
+        end
+        if i == max_iter
+            println("Does not converge within ($max_iter) iterations: norm(∂w)=($(norm(∂w)))")
+            break
+        end
+        # print result in intervals of 100
+        if i % 100 == 0
+            println("step $(i): $w")
+            @show current_J
+            println()
+        end
+    end
+    (;  w = w, J = current_J, 
+        info = (terminate_step = terminate_step, J_list = J_list, w_list = w_list))
 end
