@@ -228,7 +228,7 @@ function ProjectedGradientDownstairs(g, α, max_iter, λ, β)
             seed = i + 1    # update seed
             continue
         else
-            println("update w!")
+            # println("update w!")
             w = w_candidate
             push!(w_list, w)
             push!(J_list, current_J)
@@ -294,6 +294,7 @@ function ProjectedGradientMinMax(g, α, max_iter, λ, β; num_rerolls=50)
         end
         if i == max_iter
             println("Does not converge within ($max_iter) iterations: norm(∂w)=($(norm(∂w)))")
+            @show current_J
             break
         end
         # print result in intervals of 100

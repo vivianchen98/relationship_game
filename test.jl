@@ -1,75 +1,13 @@
 include("examples.jl")
-include("game_solvers/gradient_entropy_nash_jump.jl")
+include("game_solvers/gradient_entropy_nash_jump_new.jl")
 using Plots
-
-# given
-# name, u, V, phi = congestion() # in `examples.jl`
-
-# # step-wise test
-# u_tilde = create_u_tilde(u, phi, w)
-# x, = solve_entropy_nash_jump(u_tilde, λ) # in `game_solvers/entropy_nash_solver_jump.jl`
-# strategy_cost(x, V)
-
-# # combined test: J(x, V) (all other functions in `game_solvers/gradient_entropy_nash_jump.jl`)
-# evaluate(u, V, phi, w, λ)
-
-# # gradient computation
-# gradient(evaluate, u, V, phi, w, λ)[4]
-
-
-# perturbation test of gradient descent
-function perturbation_test(w, J, perturbation=0.1, total_test=100)
-    println("\nPerturbation test of gradient descent")
-    violation = 0
-    for _ in 1:total_test
-        w_perturbed = w + perturbation * randn(size(w))
-        J_perturbed = evaluate(u, V, phi, w_perturbed, λ)
-        J_perturbed = J_perturbed + perturbation * 0.001
-
-        @show J_perturbed > J
-        if J_perturbed < J
-            violation += 1
-        end
-    end
-    println("\nViolation rate: ", violation/total_test)
-end
-
-function convexity_test(w, J, perturbation=0.1, total_test=100)
-    println("\nConvexity test of gradient descent")
-    violation = 0
-    for _ in 1:total_test
-        dw = perturbation * randn(size(w))
-        w_perturbed = w + dw
-        J_perturbed = evaluate(u, V, phi, w_perturbed, λ)
-
-        ∂w = gradient(evaluate, u, V, phi, w, λ)[4]
-        # @show J_perturbed - J ≥ ∂w' * dw
-        if J_perturbed - J < ∂w' * dw
-            violation += 1
-        end
-    end
-    println("\nViolation rate: ", violation/total_test)
-end
-
-""" GradientDescent(game, step_size, max_iter, λ: entropy weight, β: tolerance) 
-    returns (w, J, info = (terminate_step, J_list, w_list)) 
-"""
-
-""" for congestion() """
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(congestion(), 0.05, 5000, 0.7, 1e-4)
-
-""" for bee_queen() """
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(bee_queen(), 0.2, 10000, 0.8, 2e-4)
-
-# perturbation_test(w, J, 0.1, 100) # expected violation rate: 0.0
-# convexity_test(w, J, 0.1, 100)
-
 
 function experiment(game, α, β, λ_list, max_iter)
     J_dict_of_lists = Dict()
     w_dict_of_lists = Dict()
     for λ in λ_list
-        w, J, (terminate_step, J_list, w_list) = GradientDescent(game, α, max_iter, λ, β)
+        # w, J, (terminate_step, J_list, w_list) = ProjectedGradientMinMax(game, α, max_iter, λ, β)
+        w, J, (terminate_step, J_list, w_list) = ProjectedGradientDownstairs(game, α, max_iter, λ, β)
         J_dict_of_lists[λ] = J_list
         w_dict_of_lists[λ] = w_list
     end
@@ -77,28 +15,19 @@ function experiment(game, α, β, λ_list, max_iter)
 end
 
 # plot J_dict_of_lists in one figure
-function plot_J(J_dict_of_lists; xlabel="Iteration", ylabel="J value", title="")
+function plot_J(J_dict_of_lists;iter_cap=1000, xlabel="Iteration", ylabel="J value", title="")
     plot()
     for (λ, J_list) in J_dict_of_lists
+        if length(J_list) > iter_cap
+            J_list = J_list[1:iter_cap]
+        end
         plot!(J_list, label="λ=$λ")
     end
     xlabel!(xlabel)
     ylabel!(ylabel)
     title!(title)
-    display(plot!())
-end
-
-# plot every 100 iterations
-function plot_J_interval(J_dict_of_lists; xlabel="Iteration", ylabel="J value", title="")
-    plot()
-    for (λ, J_list) in J_dict_of_lists
-        # plot at every 100 iterations
-        plot!(J_list[1:100:end], label="λ=$λ")
-    end
-    xlabel!(xlabel)
-    ylabel!(ylabel)
-    title!(title)
-    display(plot!())
+    # display(plot!())
+    savefig("results/$(title)_downstairs.png")
 end
 
 # functions to save to pickle
@@ -118,40 +47,25 @@ def save_pickle(data1, data2, fpath):
 load_pickle = py"load_pickle"
 save_pickle = py"save_pickle"
 
-# set parameters for congestion() experiments
-""" !!! frozen, don't touch !!! """
+
+# create dir results if not exists
+if !isdir("results")
+    mkdir("results")
+end
+
+"""run experiments on congestion"""
 # game = congestion()
-# α = 0.05
+# α = 0.1
 # β = 1e-4
-# λ_list = [0.1, 0.2, 0.3, 0.4, 0.5]
-# max_iter = 5000
+# J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, [0.3, 0.5, 0.7], 2000)
 
-# J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, λ_list, max_iter)
-# plot_J(J_dict_of_lists, title="$(game.name), α=$(α), β=$(β)")
-# save_pickle(J_dict_of_lists, w_dict_of_lists, "results/congestion.pkl")
-""" !!! frozen, don't touch !!! """
-
-
-# set parameters for bee_queen() experiments
-# game = bee_queen()
-# α = 0.5
-# β = 2e-4
-# λ_list = [1.0]
-# max_iter = 5000
-
-# run experiment
-# J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, λ_list, max_iter)
-# plot_J(J_dict_of_lists, title="$(game.name), α=$(α), β=$(β)")
-# save_pickle(J_dict_of_lists, w_dict_of_lists, "results/congestion.pkl")
-
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(bee_queen(), 0.5, 5000, 1.0, 2e-4)
-
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(congestion(), 0.1, 5000, 0.5, 1e-4)
+"""run experiments on bee_queen"""
+game = bee_queen()
+α = 0.1
+β = 1e-4
+J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, [0.3, 0.5, 0.7], 2000)
 
 
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(congestion(), 0.1, 5000, 0.5, 1e-4)
-
-
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(bee_queen(), 0.1, 5000, 0.5, 1e-4)
-
-# w, J, (terminate_step, J_list, w_list) = GradientDescent(undivided_congestion(4, 2), 0.1, 5000, 0.5, 1e-4)
+"""plot and save results"""
+plot_J(J_dict_of_lists; iter_cap=50, title="$(game.name)")
+save_pickle(J_dict_of_lists, w_dict_of_lists, "results/$(game.name)_downstairs.pkl")
