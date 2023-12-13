@@ -226,6 +226,8 @@ function ProjectedGradientDownstairs(g, α, max_iter, λ, β)
         # @show current_J
         if current_J > previous_J
             seed = i + 1    # update seed
+            push!(w_list, w)
+            push!(J_list, previous_J)
             continue
         else
             # println("update w!")

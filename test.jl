@@ -2,12 +2,17 @@ include("examples.jl")
 include("game_solvers/gradient_entropy_nash_jump_new.jl")
 using Plots
 
-function experiment(game, α, β, λ_list, max_iter)
+function experiment(game, α, β, λ_list, max_iter, method)
     J_dict_of_lists = Dict()
     w_dict_of_lists = Dict()
     for λ in λ_list
-        # w, J, (terminate_step, J_list, w_list) = ProjectedGradientMinMax(game, α, max_iter, λ, β)
-        w, J, (terminate_step, J_list, w_list) = ProjectedGradientDownstairs(game, α, max_iter, λ, β)
+        if method == "minmax"
+            w, J, (terminate_step, J_list, w_list) = ProjectedGradientMinMax(game, α, max_iter, λ, β)
+        elseif method == "downstairs"
+            w, J, (terminate_step, J_list, w_list) = ProjectedGradientDownstairs(game, α, max_iter, λ, β)
+        else
+            error("method not supported")
+        end
         J_dict_of_lists[λ] = J_list
         w_dict_of_lists[λ] = w_list
     end
@@ -27,7 +32,7 @@ function plot_J(J_dict_of_lists;iter_cap=1000, xlabel="Iteration", ylabel="J val
     ylabel!(ylabel)
     title!(title)
     # display(plot!())
-    savefig("results/$(title)_downstairs.png")
+    savefig("results/$(title).png")
 end
 
 # functions to save to pickle
@@ -53,19 +58,15 @@ if !isdir("results")
     mkdir("results")
 end
 
-"""run experiments on congestion"""
-# game = congestion()
-# α = 0.1
-# β = 1e-4
-# J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, [0.3, 0.5, 0.7], 2000)
-
-"""run experiments on bee_queen"""
+"""run experiments"""
 game = bee_queen()
+method = "minmax"
+
 α = 0.1
 β = 1e-4
-J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, [0.3, 0.5, 0.7], 2000)
+J_dict_of_lists, w_dict_of_lists = experiment(game, α, β, [0.3, 0.5, 0.7], 2000, method)
 
 
 """plot and save results"""
-plot_J(J_dict_of_lists; iter_cap=50, title="$(game.name)")
-save_pickle(J_dict_of_lists, w_dict_of_lists, "results/$(game.name)_downstairs.pkl")
+plot_J(J_dict_of_lists; iter_cap=2000, title="$(game.name)_$(method)")
+save_pickle(J_dict_of_lists, w_dict_of_lists, "results/$(game.name)_$(method).pkl")
