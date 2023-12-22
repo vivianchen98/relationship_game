@@ -1,42 +1,25 @@
 # relationship_game
 
-## Description
-To design weight vector on a relationship game (RG) so that is solution is socially desirable.
+To design a weight vector on a relationship game so that the quantal response equilibrium minimizes social cost.
 
-## Getting Started
-### Installing
-
-### Running
-#### running example: generalized traffic
-* A N-player, M-action running example of traffic in 
+### Relationship game examples
+* Two congestion game examples `congestion()` and `bee_queen()` in
 ```
-trafficN.jl
+examples.jl
 ```
 
-#### Global Method: order-and-design
-* Given a RG, compute a sparse w using a LP, solved by Gurobi
+### Game Solvers and Inverse algorithms
+* Game solver: Quantal Response Equilibrium (QRE) `solve_entropy_nash_jump` in
 ```
-julia order_and_design.jl
+game_solvers/entropy_nash_solver_jump.jl
 ```
-
-
-
-#### Gradient Method
-* New game solver: Entropy-Regularized Nash Solver in
+* Projected Gradient Descent algorithms `ProjectedGradientMinMax` and `ProjectedGradientDownstairs` that solves the *Min-Max* and Min-Min problems in
 ```
-game_solvers/entropy_nash_solver_general.jl
-```
-* Entropy-Nash Gradient Descent in
-```
-gradient_entropy_nash_general.jl
-```
-* test Entropy-Nash GD by
-```
-test_entropy_nash_general.jl
-```
-* visualize Entropy-Nash GD by
-```
-visualize_entropy_nash_general.jl
+game_solvers/gradient_entropy_nash_jump_new.jl
 ```
 
-### Acknowledgments
+### Experiment
+* run experiments in
+```
+test.jl
+```
